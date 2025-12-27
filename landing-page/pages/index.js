@@ -217,7 +217,7 @@ export default function Home() {
           <h2>Get Free Infrastructure Resources</h2>
           <p>I share weekly insights, case studies, and practical guides on building production-grade infrastructure.</p>
           
-          <form onSubmit={handleSubmit} className="signup-form">
+          <form onSubmit={handleSubmit} className="signup-form" data-hs-form-ignore="true">
             <div className="form-row">
               <input
                 type="text"
