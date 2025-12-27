@@ -1,0 +1,73 @@
+# CI/CD Workflow - Reference Implementation
+# Based on DevOps Productivity Suite: /Users/ky/devops-productivity-suite-site
+#
+# This workflow demonstrates production-grade CI/CD patterns.
+# For the full implementation, see:
+# /Users/ky/devops-productivity-suite-site/BUSINESS_MATERIALS/TEMPLATES/github-actions-workflow.yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Code Quality Check
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linting
+        run: npm run lint || echo "⚠️ Linting issues found"
+        continue-on-error: true
+      
+      - name: Run tests
+        run: npm test
+
+  # Build and Deploy (on main branch)
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [code-quality]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+
+# For full implementation with:
+# - Environment checks
+# - Pre-commit validation
+# - Terraform formatting
+# - Multi-service matrix builds
+# See: /Users/ky/devops-productivity-suite-site/BUSINESS_MATERIALS/TEMPLATES/github-actions-workflow.yml
+
