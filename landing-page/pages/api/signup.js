@@ -1,4 +1,7 @@
-// API route for email signup (HubSpot integration)
+// API route for email signup (HubSpot + optional SendGrid integration)
+// Supports both HubSpot workflows and SendGrid transactional emails
+import sgMail from '@sendgrid/mail';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -178,12 +181,70 @@ export default async function handler(req, res) {
       }
     }
 
+    // Optional: Send welcome email via SendGrid (if configured)
+    const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+    const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'founders@foundersinfra.com';
+    const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Founders Infrastructure';
+    
+    if (SENDGRID_API_KEY) {
+      try {
+        sgMail.setApiKey(SENDGRID_API_KEY);
+        await sgMail.send({
+          to: email,
+          from: {
+            email: SENDGRID_FROM_EMAIL,
+            name: SENDGRID_FROM_NAME,
+          },
+          subject: 'Welcome to The Founder\'s Infrastructure Playbook',
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 40px 20px; text-align: center;">
+                  <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <tr><td style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Welcome to The Founder's Infrastructure Playbook</h1>
+                    </td></tr>
+                    <tr><td style="padding: 40px 30px;">
+                      <p style="margin: 0 0 20px 0; color: #333; font-size: 16px; line-height: 1.6;">Hi ${firstName || 'there'},</p>
+                      <p style="margin: 0 0 20px 0; color: #333; font-size: 16px; line-height: 1.6;">Welcome! You've taken the first step toward building production-grade infrastructure.</p>
+                      <p style="margin: 0 0 20px 0; color: #333; font-size: 16px; line-height: 1.6;">Over the next 8 weeks, you'll learn:</p>
+                      <ul style="margin: 0 0 20px 0; padding-left: 25px; color: #333; font-size: 16px; line-height: 1.8;">
+                        <li style="margin-bottom: 10px;">How to detect technical debt before it costs $50k</li>
+                        <li style="margin-bottom: 10px;">How to build MVPs in 2 weeks instead of 3 months</li>
+                        <li style="margin-bottom: 10px;">How to deploy on Friday 5 PM with confidence</li>
+                      </ul>
+                      <p style="margin: 0 0 30px 0; color: #333; font-size: 16px; line-height: 1.6;">Questions? Just reply to this email.</p>
+                      <p style="margin: 0; color: #333; font-size: 16px; line-height: 1.6;">Let's build something great,<br><strong>${SENDGRID_FROM_NAME}</strong></p>
+                    </td></tr>
+                    <tr><td style="padding: 30px; background-color: #f8f9fa; text-align: center; border-top: 1px solid #e0e0e0;">
+                      <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">The Founder's Infrastructure Playbook</p>
+                      <p style="margin: 0; color: #666; font-size: 14px;"><a href="https://foundersinfra.com" style="color: #3b82f6; text-decoration: none;">foundersinfra.com</a></p>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body>
+            </html>
+          `,
+          text: `Hi ${firstName || 'there'},\n\nWelcome! You've taken the first step toward building production-grade infrastructure.\n\nOver the next 8 weeks, you'll learn:\n- How to detect technical debt before it costs $50k\n- How to build MVPs in 2 weeks instead of 3 months\n- How to deploy on Friday 5 PM with confidence\n\nQuestions? Just reply to this email.\n\nLet's build something great,\n${SENDGRID_FROM_NAME}\n\n---\nThe Founder's Infrastructure Playbook\nfoundersinfra.com`,
+        });
+        console.log(`Welcome email sent via SendGrid to ${email}`);
+      } catch (sendGridError) {
+        console.error('SendGrid error:', sendGridError);
+        // Don't fail signup if email fails
+      }
+    }
+
     return res.json({
       success: true,
       message: 'Successfully added to mailing list',
       contactId: contactId,
       source: leadSource,
       enrolled: !!HUBSPOT_WORKFLOW_ID,
+      emailSent: !!SENDGRID_API_KEY,
     });
   } catch (error) {
     console.error('HubSpot API Error:', error);
