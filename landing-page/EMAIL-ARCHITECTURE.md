@@ -114,10 +114,9 @@ SENDGRID_FROM_EMAIL=founders@foundersinfra.com
 SENDGRID_FROM_NAME=Founders Infrastructure
 ```
 
-### EasyFlow (Required for Email Sequences)
+### Cron Job (Required for Email Sequences)
 ```bash
-EASYFLOW_API_URL=https://your-easyflow-domain.com
-EASYFLOW_API_KEY=your_easyflow_api_key
+CRON_SECRET=your_random_secret_here  # Optional but recommended for securing cron endpoint
 ```
 
 ## Email Sequences
@@ -172,10 +171,10 @@ Email sequences are handled by **SendGrid**, not HubSpot workflows.
    - Styled HTML template
    - From: founders@foundersinfra.com
 
-3. **Sequence Enrollment (Your Choice)**
-   - Option A: SendGrid dynamic templates
-   - Option B: Your email worker system
-   - Option C: Manual sending
+3. **Sequence Enrollment (Automatic)**
+   - Email sequence scheduled in HubSpot
+   - Processed hourly by Vercel cron job
+   - Sent via SendGrid using your API key
 
 ## Next Steps
 

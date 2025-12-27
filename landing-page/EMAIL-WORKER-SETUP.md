@@ -9,21 +9,15 @@ This guide shows how to configure the email worker to send automated email seque
 - ✅ SendGrid: Sends welcome email immediately
 - ⏳ **Email Sequences: Not yet configured**
 
-## Architecture Options
+## Architecture
 
-You have three options for email sequences:
+This landing page uses **SendGrid directly** for email sequences:
 
-### Option 1: Use EasyFlow Email Worker (Recommended)
+- **Email Sequence Service** - Schedules emails in HubSpot
+- **Cron Job** - Processes scheduled emails hourly
+- **SendGrid API** - Sends all emails (welcome + sequences)
 
-**Best if:** You want to leverage your existing SaaS infrastructure
-
-Your EasyFlow SaaS already has:
-- Email worker (`rpa-system/backend/workers/email_worker.js`)
-- SendGrid integration (already configured)
-- Email queue system
-- Background job processing
-
-**This is the recommended approach** - use what already works!
+**No external services needed** - everything runs in this project!
 
 ### Option 2: Create New Email Worker for Landing Page
 
