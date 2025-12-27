@@ -1,8 +1,12 @@
 // API route for email signup (HubSpot + optional SendGrid integration)
 // Supports both HubSpot workflows and SendGrid transactional emails
-import sgMail from '@sendgrid/mail';
 
 export default async function handler(req, res) {
+  // Dynamic import for SendGrid (only if needed)
+  let sgMail = null;
+  if (process.env.SENDGRID_API_KEY) {
+    sgMail = (await import('@sendgrid/mail')).default;
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -186,7 +190,7 @@ export default async function handler(req, res) {
     const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'founders@foundersinfra.com';
     const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Founders Infrastructure';
     
-    if (SENDGRID_API_KEY) {
+    if (SENDGRID_API_KEY && sgMail) {
       try {
         sgMail.setApiKey(SENDGRID_API_KEY);
         await sgMail.send({
