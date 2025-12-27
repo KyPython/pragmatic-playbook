@@ -263,6 +263,10 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
   // Store scheduled emails in HubSpot custom property
   try {
     const emailParam = encodeURIComponent(email);
+    
+    // For date picker properties, HubSpot expects milliseconds timestamp
+    const dateValue = signupDate.getTime();
+    
     const response = await fetch(
       `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${emailParam}`,
       {
@@ -283,7 +287,7 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
             },
             {
               property: 'sequence_start_date',
-              value: signupDate.toISOString(),
+              value: dateValue, // Use milliseconds timestamp for date picker
             },
           ],
         }),
@@ -296,17 +300,33 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
     } else {
       const errorData = await response.json();
       const errorMessage = errorData.message || 'Failed to schedule email sequence';
+      const fullError = JSON.stringify(errorData, null, 2);
+      
+      // Log full error details for debugging
+      console.error('HubSpot API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        message: errorMessage,
+        propertiesAttempted: ['scheduled_emails', 'email_sequence', 'sequence_start_date']
+      });
       
       // If custom properties don't exist, log warning but don't fail
       if (errorMessage.includes('Property values were not valid') || 
           errorMessage.includes('property') && errorMessage.includes('not found') ||
-          errorMessage.toLowerCase().includes('invalid property')) {
-        console.warn(`HubSpot custom properties not found. Please create: scheduled_emails, email_sequence, sequence_start_date. Error: ${errorMessage}`);
-        console.warn('See landing-page/AUTOMATED-EMAIL-SETUP.md for instructions on creating these properties.');
+          errorMessage.toLowerCase().includes('invalid property') ||
+          errorMessage.includes('does not exist')) {
+        console.warn(`HubSpot custom properties issue detected. Error: ${errorMessage}`);
+        console.warn('Please verify these properties exist in HubSpot with EXACT names:');
+        console.warn('  - scheduled_emails (Single-line text)');
+        console.warn('  - email_sequence (Single-line text)');
+        console.warn('  - sequence_start_date (Date picker)');
+        console.warn('Go to HubSpot → Settings → Properties → Contacts to verify.');
         return { 
           success: false, 
-          error: 'Custom properties not found. Please create them in HubSpot (see AUTOMATED-EMAIL-SETUP.md)',
-          warning: true 
+          error: 'Custom properties not found or misconfigured. Please verify property names match exactly in HubSpot.',
+          warning: true,
+          details: errorMessage
         };
       }
       
