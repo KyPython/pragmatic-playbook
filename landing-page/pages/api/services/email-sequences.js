@@ -264,8 +264,27 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
   try {
     const emailParam = encodeURIComponent(email);
     
-    // For date picker properties, HubSpot expects milliseconds timestamp
-    const dateValue = signupDate.getTime();
+    // Try different date formats - HubSpot date picker might need Unix timestamp in milliseconds
+    // Format 1: Milliseconds timestamp (most common for HubSpot)
+    const dateValueMs = signupDate.getTime();
+    // Format 2: ISO string (fallback)
+    const dateValueISO = signupDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Try setting properties one at a time to isolate which one fails
+    const propertiesToSet = [
+      {
+        property: 'scheduled_emails',
+        value: JSON.stringify(scheduledEmails),
+      },
+      {
+        property: 'email_sequence',
+        value: sequenceName,
+      },
+      {
+        property: 'sequence_start_date',
+        value: dateValueMs, // Try milliseconds first
+      },
+    ];
     
     const response = await fetch(
       `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${emailParam}`,
@@ -276,20 +295,7 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
           'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
         },
         body: JSON.stringify({
-          properties: [
-            {
-              property: 'scheduled_emails',
-              value: JSON.stringify(scheduledEmails),
-            },
-            {
-              property: 'email_sequence',
-              value: sequenceName,
-            },
-            {
-              property: 'sequence_start_date',
-              value: dateValue, // Use milliseconds timestamp for date picker
-            },
-          ],
+          properties: propertiesToSet,
         }),
       }
     );
@@ -300,7 +306,25 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
     } else {
       const errorData = await response.json();
       const errorMessage = errorData.message || 'Failed to schedule email sequence';
-      const fullError = JSON.stringify(errorData, null, 2);
+      
+      // Extract which specific property failed
+      let failedProperty = null;
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        errorData.errors.forEach(err => {
+          if (err.category === 'VALIDATION_ERROR' && err.errors && Array.isArray(err.errors)) {
+            err.errors.forEach(subErr => {
+              if (subErr.errorType === 'PROPERTY_NOT_FOUND' || 
+                  subErr.errorType === 'INVALID_PROPERTY' ||
+                  subErr.errorType === 'INVALID_VALUE') {
+                failedProperty = subErr.name || subErr.property || 'unknown';
+                console.error(`❌ FAILED PROPERTY: "${failedProperty}"`);
+                console.error(`   Error Type: ${subErr.errorType}`);
+                console.error(`   Message: ${subErr.message || 'No message'}`);
+              }
+            });
+          }
+        });
+      }
       
       // Log full error details for debugging
       console.error('HubSpot API Error Details:', {
@@ -308,8 +332,45 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
         statusText: response.statusText,
         error: errorData,
         message: errorMessage,
-        propertiesAttempted: ['scheduled_emails', 'email_sequence', 'sequence_start_date']
+        failedProperty: failedProperty,
+        propertiesAttempted: propertiesToSet.map(p => p.property),
+        dateValueUsed: dateValueMs,
+        dateValueISO: dateValueISO
       });
+      
+      // If date property failed, try ISO format
+      if (failedProperty === 'sequence_start_date') {
+        console.log('⚠️  Date property failed with milliseconds, trying ISO format...');
+        const retryProperties = [
+          ...propertiesToSet.filter(p => p.property !== 'sequence_start_date'),
+          {
+            property: 'sequence_start_date',
+            value: dateValueISO, // Try ISO format
+          },
+        ];
+        
+        const retryResponse = await fetch(
+          `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${emailParam}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+            },
+            body: JSON.stringify({
+              properties: retryProperties,
+            }),
+          }
+        );
+        
+        if (retryResponse.ok) {
+          console.log(`✅ Email sequence scheduled (using ISO date format): ${scheduledEmails.length} emails`);
+          return { success: true, scheduledCount: scheduledEmails.length };
+        } else {
+          const retryErrorData = await retryResponse.json();
+          console.error('❌ Retry with ISO format also failed:', retryErrorData);
+        }
+      }
       
       // If custom properties don't exist, log warning but don't fail
       if (errorMessage.includes('Property values were not valid') || 
@@ -317,6 +378,9 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
           errorMessage.toLowerCase().includes('invalid property') ||
           errorMessage.includes('does not exist')) {
         console.warn(`HubSpot custom properties issue detected. Error: ${errorMessage}`);
+        if (failedProperty) {
+          console.warn(`❌ SPECIFIC FAILED PROPERTY: "${failedProperty}"`);
+        }
         console.warn('Please verify these properties exist in HubSpot with EXACT names:');
         console.warn('  - scheduled_emails (Single-line text)');
         console.warn('  - email_sequence (Single-line text)');
@@ -324,9 +388,10 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
         console.warn('Go to HubSpot → Settings → Properties → Contacts to verify.');
         return { 
           success: false, 
-          error: 'Custom properties not found or misconfigured. Please verify property names match exactly in HubSpot.',
+          error: `Custom property "${failedProperty || 'unknown'}" not found or misconfigured. Please verify property names match exactly in HubSpot.`,
           warning: true,
-          details: errorMessage
+          details: errorMessage,
+          failedProperty: failedProperty
         };
       }
       
