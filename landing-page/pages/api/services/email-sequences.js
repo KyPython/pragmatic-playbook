@@ -298,7 +298,7 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
       },
             {
               property: 'sequence_start_date',
-              value: dateValueISO, // Use ISO format (YYYY-MM-DD) - HubSpot date picker prefers this
+              value: dateValueMs, // Use milliseconds timestamp at midnight (HubSpot date picker requires number, not string)
             },
     ];
     
@@ -390,42 +390,12 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
         contactId: contactId
       });
       
-      // If date property failed, try ISO format
+      // If date property failed, log the issue (we're already using milliseconds at midnight)
       if (failedProperty === 'sequence_start_date') {
-        console.log('⚠️  Date property failed with milliseconds, trying ISO format (YYYY-MM-DD)...');
-        const retryProperties = [
-          ...propertiesToSet.filter(p => p.property !== 'sequence_start_date'),
-          {
-            property: 'sequence_start_date',
-            value: dateValueISO, // Try ISO format (YYYY-MM-DD)
-          },
-        ];
-        
-        const retryResponse = await fetch(
-          contactEndpoint,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            },
-            body: JSON.stringify({
-              properties: retryProperties,
-            }),
-          }
-        );
-        
-        if (retryResponse.ok) {
-          console.log(`✅ Email sequence scheduled (using ISO date format): ${scheduledEmails.length} emails`);
-          return { success: true, scheduledCount: scheduledEmails.length };
-        } else {
-          const retryErrorData = await retryResponse.json();
-          console.error('❌ Retry with ISO format also failed:', retryErrorData);
-          // Log validation results if available
-          if (retryErrorData.validationResults) {
-            console.error('Retry validationResults:', JSON.stringify(retryErrorData.validationResults, null, 2));
-          }
-        }
+        console.error('❌ Date property failed even with milliseconds at midnight.');
+        console.error(`   Date value sent: ${dateValueMs} (${new Date(dateValueMs).toISOString()})`);
+        console.error('   This suggests the property type in HubSpot might be incorrect.');
+        console.error('   Please verify: sequence_start_date is a "Date picker" property (not "Date/time" or "Number")');
       }
       
       // If custom properties don't exist, log warning but don't fail
