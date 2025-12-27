@@ -494,22 +494,6 @@ export default function Home() {
           box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        .service-card.featured {
-          border-color: #3b82f6;
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        }
-
-        .badge {
-          position: absolute;
-          top: -12px;
-          right: 20px;
-          background: #3b82f6;
-          color: white;
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 600;
-        }
 
         .price {
           font-size: 36px;
