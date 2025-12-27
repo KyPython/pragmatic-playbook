@@ -62,7 +62,7 @@ export default function Home() {
             Recover $50K+ in Lost Velocity
           </h1>
           <p className="subtitle">
-            Infrastructure consulting for Seed/Series A startups. Deploy on Friday 5 PM without fear.
+            Infrastructure consulting for Seed/Series A startups. Deploy on Friday 5 PM with confidence.
           </p>
           <div className="cta-buttons">
             <a href="#consulting" className="btn btn-primary">
@@ -200,7 +200,7 @@ export default function Home() {
             <div className="result-card">
               <div className="result-number">2 min</div>
               <div className="result-label">Rollback Time</div>
-              <p>Deploy on Friday 5 PM without fear. Rollback in 2 minutes if something breaks.</p>
+              <p>Deploy on Friday 5 PM with confidence. Rollback in 2 minutes if something breaks.</p>
             </div>
           </div>
         </section>
@@ -356,6 +356,16 @@ export default function Home() {
           color: #667eea;
         }
 
+        .contact .btn-secondary {
+          color: #667eea;
+          border: 2px solid #667eea;
+        }
+
+        .contact .btn-secondary:hover {
+          background: #667eea;
+          color: white;
+        }
+
         .btn-large {
           padding: 20px 40px;
           font-size: 20px;
@@ -368,9 +378,11 @@ export default function Home() {
 
         h2 {
           font-size: 36px;
+          font-weight: 700;
           margin-bottom: 20px;
           color: #333;
           text-align: center;
+          line-height: 1.2;
         }
 
         h3 {
@@ -383,15 +395,38 @@ export default function Home() {
           background: #f8f9fa;
           border-radius: 12px;
           padding: 40px;
+          margin: 40px 0;
+        }
+
+        .problem h2 {
+          margin-bottom: 20px;
+        }
+
+        .problem p {
+          margin: 15px 0;
+          font-size: 16px;
+          line-height: 1.6;
         }
 
         .problem ul {
           margin: 20px 0;
           padding-left: 30px;
+          list-style: none;
         }
 
         .problem li {
           margin: 10px 0;
+          padding-left: 20px;
+          position: relative;
+        }
+
+        .problem li:before {
+          content: "•";
+          position: absolute;
+          left: 0;
+          color: #667eea;
+          font-weight: bold;
+          font-size: 20px;
         }
 
         .highlight {
@@ -419,6 +454,9 @@ export default function Home() {
           font-size: 20px;
           color: #666;
           margin-bottom: 40px;
+          max-width: 800px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .service-grid {
@@ -597,6 +635,9 @@ export default function Home() {
         .contact {
           text-align: center;
           padding: 60px 20px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          margin: 40px 0;
         }
 
         .contact-buttons {
@@ -611,6 +652,7 @@ export default function Home() {
           color: #666;
           font-size: 14px;
           margin-top: 20px;
+          font-style: italic;
         }
 
         footer {
