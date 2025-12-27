@@ -105,11 +105,32 @@ export default async function handler(req, res) {
   const HUBSPOT_API_URL = 'https://api.hubapi.com/contacts/v1/contact';
 
   if (!HUBSPOT_API_KEY) {
-    // If HubSpot not configured, just return success (for testing)
-    console.warn('HubSpot API key not configured');
+    // If HubSpot not configured, log warning but still try to send email
+    console.warn('HubSpot API key not configured - contacts will not be saved to HubSpot');
+    
+    // Still try to send welcome email if SendGrid is configured
+    const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+    if (SENDGRID_API_KEY && sgMail) {
+      try {
+        sgMail.setApiKey(SENDGRID_API_KEY);
+        const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'founders@foundersinfra.com';
+        const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Founders Infrastructure';
+        
+        await sgMail.send({
+          to: email,
+          from: { email: SENDGRID_FROM_EMAIL, name: SENDGRID_FROM_NAME },
+          subject: 'Welcome to The Founder\'s Infrastructure Playbook',
+          html: `Hi ${firstName || 'there'},<br><br>Welcome! You've been added to our mailing list.<br><br>Best,<br>${SENDGRID_FROM_NAME}`,
+        });
+      } catch (emailError) {
+        console.error('SendGrid error (HubSpot not configured):', emailError);
+      }
+    }
+    
     return res.json({
       success: true,
-      message: 'Signup received (HubSpot not configured)',
+      message: 'Signup received (HubSpot not configured - email sent if SendGrid available)',
+      hubspotSaved: false,
     });
   }
 
@@ -183,15 +204,29 @@ export default async function handler(req, res) {
     }
 
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData.message || errorData.errors?.[0]?.message || 'Failed to add contact to HubSpot';
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (parseError) {
+        // If response isn't JSON, get text
+        const textError = await response.text();
+        errorData = { message: textError || `HTTP ${response.status}: ${response.statusText}` };
+      }
+      
+      const errorMessage = errorData.message || 
+                          errorData.errors?.[0]?.message || 
+                          errorData.errors?.[0]?.error || 
+                          `HTTP ${response.status}: ${response.statusText}`;
       
       // Log full error details for debugging (always log technical details)
       console.error('HubSpot API Error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
-        message: errorMessage
+        message: errorMessage,
+        properties: properties, // Log what we tried to send
+        apiKeyPresent: !!HUBSPOT_API_KEY,
+        apiKeyLength: HUBSPOT_API_KEY ? HUBSPOT_API_KEY.length : 0
       });
       
       throw new Error(errorMessage);
