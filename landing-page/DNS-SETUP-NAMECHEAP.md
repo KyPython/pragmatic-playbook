@@ -1,4 +1,6 @@
-# DNS Setup for Namecheap - foundersinfra.com
+# DNS Setup for SendGrid Domain Authentication
+
+**See `EMAIL-ARCHITECTURE.md` for context. This guide is specific to Namecheap DNS.**
 
 ## Quick Start (Namecheap-Specific)
 

@@ -1,6 +1,8 @@
-# Deploy Landing Page to Vercel
+# Deployment Guide
 
-## Quick Deploy (2 Minutes)
+**See `README.md` for overview and quick start.**
+
+## Detailed Deployment Steps
 
 ### Step 1: Install Vercel CLI
 

@@ -12,39 +12,14 @@ Consulting-focused landing page with email signup and booking links. Ready to de
 
 ## Quick Deploy to Vercel
 
-### Option 1: Deploy via Vercel CLI
+**See `DEPLOY.md` for detailed deployment instructions.**
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-cd landing-page
-vercel
-
-# Follow prompts:
-# - Link to existing project? No
-# - Project name: foundersinfra-landing
-# - Directory: ./landing-page
-# - Override settings? No
-```
-
-### Option 2: Deploy via GitHub
-
-1. Push this repo to GitHub
-2. Go to [vercel.com](https://vercel.com)
-3. Import project from GitHub
-4. Set root directory to `landing-page`
+Quick start:
+1. Push to GitHub
+2. Go to [vercel.com](https://vercel.com) → Import project
+3. Set root directory: `landing-page`
+4. Add environment variables (see below)
 5. Deploy!
-
-### Option 3: Deploy via Vercel Dashboard
-
-1. Go to [vercel.com](https://vercel.com)
-2. Click "New Project"
-3. Import Git repository
-4. Set root directory: `landing-page`
-5. Framework preset: Next.js
-6. Deploy!
 
 ## Environment Variables
 
@@ -83,6 +58,14 @@ CRON_SECRET=your_random_secret_here  # For securing cron job endpoint (optional 
 - Uses SendGrid API key you created
 
 **See `EMAIL-ARCHITECTURE.md` for detailed setup instructions.**
+
+## Documentation
+
+- **`DEPLOY.md`** - Detailed deployment guide
+- **`EMAIL-ARCHITECTURE.md`** - Email system architecture (HubSpot + SendGrid)
+- **`EMAIL-SEQUENCE-SETUP.md`** - Step-by-step email sequence configuration
+- **`DNS-SETUP-NAMECHEAP.md`** - DNS setup for SendGrid domain authentication
+- **`TROUBLESHOOTING.md`** - Common issues and solutions
 
 ## Custom Domain Setup
 

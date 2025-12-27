@@ -1,6 +1,10 @@
-# Troubleshooting: Contacts Not Appearing in HubSpot
+# Troubleshooting Guide
 
-## Quick Checks
+**See `README.md` for setup overview. See `EMAIL-ARCHITECTURE.md` for architecture details.**
+
+## Common Issues
+
+### Contacts Not Appearing in HubSpot
 
 ### 1. Check Vercel Environment Variables
 

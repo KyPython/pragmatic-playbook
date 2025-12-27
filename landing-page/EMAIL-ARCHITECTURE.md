@@ -1,4 +1,6 @@
-# Email Architecture & Setup Guide
+# Email Architecture
+
+**See `README.md` for quick setup. See `EMAIL-SEQUENCE-SETUP.md` for step-by-step instructions.**
 
 ## Overview
 

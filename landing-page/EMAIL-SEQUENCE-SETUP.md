@@ -1,5 +1,7 @@
 # Email Sequence Setup Guide
 
+**See `EMAIL-ARCHITECTURE.md` for architecture overview. See `README.md` for quick start.**
+
 ## Overview
 
 This landing page uses **SendGrid** (with the API key you created) to send automated email sequences. Here's how to set it up:
