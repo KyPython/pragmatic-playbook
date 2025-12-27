@@ -138,17 +138,27 @@ export default async function handler(req, res) {
     // Build properties array for v1 API (format: [{property: 'name', value: 'value'}])
     // Only include standard HubSpot properties that always exist
     // Custom properties (signup_source, etc.) should be created in HubSpot first
+    // Only use core properties that always exist in HubSpot
+    // Avoid any custom or optional properties that might not exist
     const properties = [
       { property: 'email', value: email },
       ...(firstName ? [{ property: 'firstname', value: firstName }] : []),
       ...(lastName ? [{ property: 'lastname', value: lastName }] : []),
       { property: 'lifecyclestage', value: 'subscriber' },
-      // Standard HubSpot properties (always exist)
-      { property: 'hs_analytics_source', value: 'LANDING_PAGE' },
-      { property: 'hs_analytics_source_data_1', value: 'foundersinfra.com' },
-      { property: 'hs_analytics_source_data_2', value: 'Email Signup Form' },
-      { property: 'hs_lead_status', value: 'NEW' },
     ];
+    
+    // Only add analytics properties if they exist (won't break if missing)
+    // These are standard but might not be available in all HubSpot accounts
+    try {
+      properties.push(
+        { property: 'hs_analytics_source', value: 'LANDING_PAGE' },
+        { property: 'hs_analytics_source_data_1', value: 'foundersinfra.com' },
+        { property: 'hs_analytics_source_data_2', value: 'Email Signup Form' }
+      );
+    } catch (e) {
+      // If adding analytics properties fails, continue without them
+      console.warn('Could not add analytics properties:', e);
+    }
     
     // Note: Custom properties (signup_source, signup_url, etc.) should be created in HubSpot first
     // See EMAIL-SEQUENCE-SETUP.md for instructions on creating custom properties
@@ -179,10 +189,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             properties: [
               { property: 'lifecyclestage', value: 'subscriber' },
-              // Update source tracking even for existing contacts (standard properties only)
-              { property: 'hs_analytics_source', value: 'LANDING_PAGE' },
-              { property: 'hs_analytics_source_data_1', value: 'foundersinfra.com' },
-              { property: 'hs_analytics_source_data_2', value: 'Email Signup Form' },
+              // Only update core properties for existing contacts
             ],
           }),
         }
