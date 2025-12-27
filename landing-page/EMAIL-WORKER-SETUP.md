@@ -13,17 +13,17 @@ This guide shows how to configure the email worker to send automated email seque
 
 You have three options for email sequences:
 
-### Option 1: Use DevOps Productivity Suite Email Worker (Recommended)
+### Option 1: Use EasyFlow Email Worker (Recommended)
 
-**Best if:** You want to leverage your existing infrastructure
+**Best if:** You want to leverage your existing SaaS infrastructure
 
-The DevOps Productivity Suite (`/Users/ky/devops-productivity-suite-site`) already has:
-- Email queue service
-- Scheduled email storage
-- Cron job processor
-- HubSpot integration
+Your EasyFlow SaaS already has:
+- Email worker (`rpa-system/backend/workers/email_worker.js`)
+- SendGrid integration (already configured)
+- Email queue system
+- Background job processing
 
-**Adaptation needed:** Switch from Resend to SendGrid
+**This is the recommended approach** - use what already works!
 
 ### Option 2: Create New Email Worker for Landing Page
 
@@ -45,207 +45,80 @@ Use SendGrid's built-in automation:
 
 ---
 
-## Option 1: Adapt DevOps Suite Email Worker (Recommended)
+## Option 1: Use EasyFlow Email Worker (Recommended)
 
-### Step 1: Create SendGrid Email Service
+### Step 1: Expose EasyFlow API Endpoint
 
-Create `landing-page/pages/api/services/sendgrid-service.js`:
+In your EasyFlow SaaS, create an API endpoint to enroll contacts in email sequences:
+
+**File:** `rpa-system/backend/routes/emailSequenceRoutes.js` (or similar)
 
 ```javascript
-const sgMail = require('@sendgrid/mail');
-
-class SendGridService {
-  constructor() {
-    this.apiKey = process.env.SENDGRID_API_KEY;
-    this.fromEmail = process.env.SENDGRID_FROM_EMAIL || 'founders@foundersinfra.com';
-    this.fromName = process.env.SENDGRID_FROM_NAME || 'Founders Infrastructure';
-    
-    if (this.apiKey) {
-      sgMail.setApiKey(this.apiKey);
-    }
+// Add to your EasyFlow backend
+router.post('/api/email-sequences/enroll', async (req, res) => {
+  const { email, firstName, lastName, sequence } = req.body;
+  
+  // Validate
+  if (!email || !sequence) {
+    return res.status(400).json({ error: 'Email and sequence required' });
   }
-
-  async sendEmail({ to, subject, html, text }) {
-    if (!this.apiKey) {
-      console.warn('SendGrid API key not configured');
-      return { success: false, error: 'SendGrid not configured' };
-    }
-
-    try {
-      const result = await sgMail.send({
-        to,
-        from: {
-          email: this.fromEmail,
-          name: this.fromName,
-        },
-        subject,
-        html,
-        text: text || html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
-      });
-
-      console.log('Email sent via SendGrid', { to, subject, messageId: result[0]?.headers['x-message-id'] });
-      return { success: true, messageId: result[0]?.headers['x-message-id'] };
-    } catch (error) {
-      console.error('SendGrid error:', error);
-      return { success: false, error: error.message };
-    }
-  }
-}
-
-module.exports = new SendGridService();
+  
+  // Use your existing email worker
+  const emailWorker = require('../workers/email_worker');
+  
+  // Enroll in sequence
+  await emailWorker.enrollInSequence({
+    email,
+    firstName: firstName || '',
+    lastName: lastName || '',
+    sequence: sequence || 'foundersinfra-welcome', // Default sequence
+  });
+  
+  res.json({ success: true, message: 'Enrolled in email sequence' });
+});
 ```
 
-### Step 2: Create Email Queue Service
+### Step 2: Update Landing Page Signup API
 
-Create `landing-page/pages/api/services/email-queue.js`:
-
-```javascript
-const sendGridService = require('./sendgrid-service');
-const hubspotService = require('./hubspot-service'); // You'll need to create this
-
-class EmailQueueService {
-  /**
-   * Schedule email sequence for a new signup
-   */
-  async scheduleSequence(email, firstName) {
-    const sequence = [
-      { delay: 0, subject: 'Welcome to The Founder\'s Infrastructure Playbook', template: 'welcome' },
-      { delay: 2, subject: 'The $50K Technical Debt Problem', template: 'pain-point' }, // 2 days
-      { delay: 5, subject: 'How to Recover Lost Velocity', template: 'roi' }, // 5 days
-      { delay: 9, subject: 'Real Results from Infrastructure Consulting', template: 'social-proof' }, // 9 days
-      { delay: 13, subject: 'Ready to Recover $50K+ in Lost Velocity?', template: 'final-push' }, // 13 days
-      { delay: 20, subject: 'Following up on infrastructure consulting', template: 'follow-up' }, // 20 days
-    ];
-
-    for (const emailConfig of sequence) {
-      const scheduledFor = new Date();
-      scheduledFor.setDate(scheduledFor.getDate() + emailConfig.delay);
-
-      // Store in HubSpot custom property or use a simple storage solution
-      await this.scheduleEmail(email, firstName, emailConfig, scheduledFor);
-    }
-  }
-
-  async scheduleEmail(email, firstName, config, scheduledFor) {
-    // Store scheduled email (options below)
-    // Option A: HubSpot custom property (simple)
-    // Option B: Database (more robust)
-    // Option C: SendGrid scheduled send (if supported)
-    
-    // For now, we'll use HubSpot to track scheduled emails
-    await hubspotService.addScheduledEmail(email, {
-      subject: config.subject,
-      template: config.template,
-      scheduledFor: scheduledFor.toISOString(),
-    });
-  }
-}
-
-module.exports = new EmailQueueService();
-```
-
-### Step 3: Create Cron Job to Process Queue
-
-Create `landing-page/pages/api/cron/process-email-queue.js`:
+Update `landing-page/pages/api/signup.js` to call EasyFlow:
 
 ```javascript
-const sendGridService = require('../services/sendgrid-service');
-const hubspotService = require('../services/hubspot-service');
-const emailTemplates = require('../services/email-templates');
-
-export default async function handler(req, res) {
-  // Verify cron secret
-  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    // Get contacts with due emails from HubSpot
-    const contactsWithDueEmails = await hubspotService.getContactsWithDueEmails();
-
-    let sent = 0;
-    let failed = 0;
-
-    for (const contact of contactsWithDueEmails) {
-      try {
-        // Check if they've replied or unsubscribed
-        if (await hubspotService.hasReplied(contact.email)) {
-          continue; // Skip if they've engaged
-        }
-
-        // Get email template
-        const email = emailTemplates.getTemplate(contact.scheduledEmail.template, contact.firstName);
-        
-        // Send email
-        await sendGridService.sendEmail({
-          to: contact.email,
-          subject: contact.scheduledEmail.subject,
-          html: email.html,
-          text: email.text,
-        });
-
-        // Mark as sent
-        await hubspotService.markEmailSent(contact.email, contact.scheduledEmail.id);
-        sent++;
-      } catch (error) {
-        console.error('Failed to send email:', error);
-        failed++;
-      }
-    }
-
-    return res.json({
-      success: true,
-      sent,
-      failed,
-      total: contactsWithDueEmails.length,
-    });
-  } catch (error) {
-    console.error('Email queue processing error:', error);
-    return res.status(500).json({ error: 'Failed to process queue' });
-  }
-}
-```
-
-### Step 4: Update Signup API to Schedule Sequence
-
-Update `landing-page/pages/api/signup.js`:
-
-```javascript
-// Add after welcome email is sent
-const emailQueueService = require('./services/email-queue');
-
-// ... existing code ...
-
 // After welcome email is sent successfully
 if (emailSent) {
-  // Schedule email sequence
-  try {
-    await emailQueueService.scheduleSequence(email, firstName || 'there');
-    console.log('Email sequence scheduled for', email);
-  } catch (error) {
-    console.error('Failed to schedule email sequence:', error);
-    // Don't fail signup if sequence scheduling fails
+  // Enroll in EasyFlow email sequence
+  const EASYFLOW_API_URL = process.env.EASYFLOW_API_URL || 'https://your-easyflow-domain.com';
+  const EASYFLOW_API_KEY = process.env.EASYFLOW_API_KEY;
+  
+  if (EASYFLOW_API_KEY) {
+    try {
+      const response = await fetch(`${EASYFLOW_API_URL}/api/email-sequences/enroll`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${EASYFLOW_API_KEY}`,
+        },
+        body: JSON.stringify({
+          email,
+          firstName: firstName || '',
+          lastName: lastName || '',
+          sequence: 'foundersinfra-welcome', // Your sequence name in EasyFlow
+        }),
+      });
+      
+      if (response.ok) {
+        console.log('Enrolled in EasyFlow email sequence:', email);
+      } else {
+        console.error('Failed to enroll in EasyFlow sequence:', await response.text());
+      }
+    } catch (error) {
+      console.error('EasyFlow enrollment error:', error);
+      // Don't fail signup if sequence enrollment fails
+    }
   }
 }
 ```
 
-### Step 5: Configure Vercel Cron Job
-
-Update `landing-page/vercel.json`:
-
-```json
-{
-  "version": 2,
-  "crons": [
-    {
-      "path": "/api/cron/process-email-queue",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
-```
-
-### Step 6: Set Environment Variables
+### Step 2: Set Environment Variables
 
 In Vercel Dashboard → Settings → Environment Variables:
 
@@ -254,12 +127,13 @@ SENDGRID_API_KEY=your_sendgrid_api_key
 SENDGRID_FROM_EMAIL=founders@foundersinfra.com
 SENDGRID_FROM_NAME=Founders Infrastructure
 HUBSPOT_API_KEY=your_hubspot_api_key
-CRON_SECRET=your_random_secret_here
+EASYFLOW_API_URL=https://your-easyflow-domain.com
+EASYFLOW_API_KEY=your_easyflow_api_key
 ```
 
 ---
 
-## Option 2: Simple SendGrid Integration (Quick Start)
+## Option 2: Create New Email Worker for Landing Page
 
 If you want a simpler approach, you can trigger SendGrid sequences directly from the signup API:
 
@@ -287,34 +161,19 @@ if (emailSent && SENDGRID_API_KEY) {
 
 ---
 
-## Option 3: Use Your SaaS Email Worker
-
-If your SaaS (`useeasyflow.com`) already has an email worker:
-
-1. **Expose an API endpoint** in your SaaS to add contacts to email sequences
-2. **Call it from the landing page signup API:**
-   ```javascript
-   await fetch('https://your-saas.com/api/email-sequences/enroll', {
-     method: 'POST',
-     headers: { 'Authorization': `Bearer ${SAAS_API_KEY}` },
-     body: JSON.stringify({ email, firstName, sequence: 'foundersinfra-welcome' }),
-   });
-   ```
+## Option 3: SendGrid Dynamic Templates (Alternative)
 
 ---
 
 ## Recommended Approach
 
-**For now:** Use **Option 1** (adapt DevOps Suite pattern) because:
-- ✅ You already have the infrastructure
-- ✅ Proven pattern (works in DevOps Suite)
-- ✅ Full control over timing and content
-- ✅ Easy to customize sequences
-
-**Later:** Consider **Option 3** (use SaaS email worker) if:
-- You want centralized email management
-- You want to reuse existing sequences
-- You want one system for all emails
+**Use Option 1 (EasyFlow Email Worker)** because:
+- ✅ You already have the infrastructure (EasyFlow SaaS)
+- ✅ SendGrid already configured
+- ✅ Email worker already working
+- ✅ Centralized email management
+- ✅ Reuse existing sequences
+- ✅ One system for all emails
 
 ---
 
@@ -330,5 +189,5 @@ If your SaaS (`useeasyflow.com`) already has an email worker:
 
 ---
 
-**Questions?** The DevOps Productivity Suite has a working example you can reference at `/Users/ky/devops-productivity-suite-site/api/services/email-queue.ts`
+**Questions?** Your EasyFlow email worker is already set up and working. Just expose an API endpoint to enroll contacts in sequences, then call it from the landing page signup API.
 
