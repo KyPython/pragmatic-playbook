@@ -183,11 +183,16 @@ export default async function handler(req, res) {
         }
       );
 
-      let contactId = null;
       if (updateResponse.ok) {
-        const updateData = await updateResponse.json();
-        contactId = updateData.vid || updateData.id;
-        console.log(`Updated existing contact in HubSpot: ${contactId}`);
+        try {
+          const updateData = await updateResponse.json();
+          contactId = updateData.vid || updateData.id;
+          hubspotSaved = true;
+          console.log(`Updated existing contact in HubSpot: ${contactId}`);
+        } catch (parseError) {
+          console.error('Failed to parse HubSpot update response:', parseError);
+          hubspotSaved = false;
+        }
         // Continue to send welcome email (don't return early)
       } else {
         // If update failed, log but continue (don't fail signup)
@@ -201,12 +206,10 @@ export default async function handler(req, res) {
           status: updateResponse.status,
           error: updateErrorData
         });
+        hubspotSaved = false;
         // Continue anyway - we'll try to send email
       }
     }
-
-    let contactId = null;
-    let hubspotSaved = false;
     
     if (!response.ok) {
       // HubSpot API failed - log error but don't fail signup
@@ -350,7 +353,7 @@ export default async function handler(req, res) {
       contactId: contactId,
       source: leadSource,
       emailSent: emailSent,
-      hubspotSaved: !!HUBSPOT_API_KEY,
+      hubspotSaved: hubspotSaved,
       sequenceScheduled: sequenceScheduled,
     });
   } catch (error) {
