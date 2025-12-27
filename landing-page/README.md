@@ -131,7 +131,7 @@ Edit the service cards in the `services` section to match your offerings.
 3. Email sequence scheduled (stored in HubSpot)
 4. Cron job runs hourly → Sends due emails via SendGrid
 
-See `EMAIL-ARCHITECTURE.md` and `EMAIL-WORKER-SETUP.md` for complete setup guide.
+See `EMAIL-ARCHITECTURE.md` and `EMAIL-SEQUENCE-SETUP.md` for complete setup guide.
 
 ## Build & Deploy
 
