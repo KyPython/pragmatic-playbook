@@ -396,7 +396,6 @@ export default async function handler(req, res) {
     }
 
     // Schedule email sequence using SendGrid (if configured)
-    let sequenceScheduled = false;
     if (emailSent && emailSequences && HUBSPOT_API_KEY) {
       try {
         const result = await emailSequences.scheduleSequence(
