@@ -48,14 +48,25 @@ vercel
 
 ## Environment Variables
 
-For email signup to work with HubSpot:
+### Required for Contact Management (HubSpot)
+```bash
+HUBSPOT_API_KEY=your_hubspot_api_key
+```
 
-1. Get HubSpot API key from [HubSpot Settings](https://app.hubspot.com/settings/integrations/api-key)
+### Required for Email Sending (SendGrid)
+```bash
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_FROM_EMAIL=founders@foundersinfra.com  # Optional
+SENDGRID_FROM_NAME=Founders Infrastructure       # Optional
+```
+
+**Setup:**
+1. Get API keys from HubSpot and SendGrid
 2. In Vercel dashboard → Project Settings → Environment Variables
-3. Add `HUBSPOT_API_KEY` with your API key
+3. Add all environment variables
 4. Redeploy
 
-If HubSpot is not configured, signups will still work but won't be saved.
+**See `EMAIL-ARCHITECTURE.md` for detailed setup instructions.**
 
 ## Custom Domain Setup
 
@@ -109,9 +120,12 @@ with your contact email.
 
 Edit the service cards in the `services` section to match your offerings.
 
-### HubSpot Integration
+### Email Integration
 
-The email signup form automatically integrates with HubSpot if `HUBSPOT_API_KEY` is set in environment variables.
+- **HubSpot**: Saves contacts to CRM (if `HUBSPOT_API_KEY` is set)
+- **SendGrid**: Sends welcome emails (if `SENDGRID_API_KEY` is set)
+
+See `EMAIL-ARCHITECTURE.md` for complete setup guide.
 
 ## Build & Deploy
 

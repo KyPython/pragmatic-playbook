@@ -1,9 +1,64 @@
-# Email Architecture
+# Email Architecture & Setup Guide
 
 ## Overview
 
 **HubSpot**: Contact management (CRM) only  
 **SendGrid**: All email sending (transactional + sequences)
+
+## Quick Setup
+
+### 1. HubSpot (Contact Management)
+
+**Environment Variable:**
+```bash
+HUBSPOT_API_KEY=your_hubspot_api_key
+```
+
+**What it does:**
+- Saves contacts to CRM
+- Tracks source (landing page, URL, etc.)
+- Stores custom properties
+- Analytics and reporting
+
+**Source Tracking Properties:**
+- `hs_analytics_source`: `LANDING_PAGE`
+- `hs_analytics_source_data_1`: `foundersinfra.com`
+- `signup_source`: `Landing Page - Email Signup Form`
+- `signup_url`: The URL they came from
+- `signup_date`: Timestamp
+- `marketing_source`: `foundersinfra.com`
+- `lead_source`: `Landing Page`
+
+**Setup Custom Properties in HubSpot:**
+1. Go to Settings → Properties → Contacts
+2. Create these properties:
+   - `signup_source` (Single-line text)
+   - `signup_url` (Single-line text)
+   - `signup_date` (Date picker)
+   - `marketing_source` (Single-line text)
+   - `lead_source` (Single-line text)
+
+### 2. SendGrid (Email Sending)
+
+**Environment Variables:**
+```bash
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_FROM_EMAIL=founders@foundersinfra.com  # Optional, defaults to this
+SENDGRID_FROM_NAME=Founders Infrastructure       # Optional, defaults to this
+```
+
+**What it does:**
+- Sends welcome emails immediately
+- Handles all email delivery
+- Better deliverability than HubSpot
+
+**Domain Setup:**
+1. Go to SendGrid → Settings → Sender Authentication
+2. Add domain: `foundersinfra.com`
+3. Add DNS records (CNAME records provided by SendGrid)
+4. Verify domain (5-10 minutes)
+5. Create sender: `founders@foundersinfra.com`
+6. Verify sender email
 
 ## Architecture
 
