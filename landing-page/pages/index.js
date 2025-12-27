@@ -54,7 +54,10 @@ export default function Home() {
         <title>Infrastructure Consulting | The Founder's Infrastructure Playbook</title>
         <meta name="description" content="Infrastructure consulting for Seed/Series A startups. Recover $50K+ in lost velocity. Deploy with confidence. Scale your team without breaking things." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <meta name="theme-color" content="#3b82f6" />
       </Head>
 
       {/* HubSpot Embed Code */}
