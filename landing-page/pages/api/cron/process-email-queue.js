@@ -2,7 +2,12 @@
 // Runs hourly via Vercel cron jobs
 // Sends emails that are due using SendGrid
 
-const { getEmailTemplate, sendEmailViaSendGrid } = require('../services/email-sequences');
+let emailSequences = null;
+try {
+  emailSequences = require('../services/email-sequences');
+} catch (e) {
+  console.warn('Email sequences service not available:', e.message);
+}
 
 export default async function handler(req, res) {
   // Verify cron secret (Vercel adds Authorization header)
@@ -74,9 +79,14 @@ export default async function handler(req, res) {
         // Send each due email
         for (const emailConfig of dueEmails) {
           try {
-            const template = getEmailTemplate(emailConfig.template, firstName);
+            if (!emailSequences) {
+              console.error('Email sequences service not available');
+              continue;
+            }
             
-            const result = await sendEmailViaSendGrid(
+            const template = emailSequences.getEmailTemplate(emailConfig.template, firstName);
+            
+            const result = await emailSequences.sendEmailViaSendGrid(
               email,
               emailConfig.subject,
               template.html,
