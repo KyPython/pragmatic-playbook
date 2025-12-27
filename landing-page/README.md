@@ -60,17 +60,27 @@ SENDGRID_FROM_EMAIL=founders@foundersinfra.com  # Optional
 SENDGRID_FROM_NAME=Founders Infrastructure       # Optional
 ```
 
-### Required for Email Sequences (EasyFlow)
+### Required for Email Sequences (Cron Job)
 ```bash
-EASYFLOW_API_URL=https://your-easyflow-domain.com
-EASYFLOW_API_KEY=your_easyflow_api_key  # API key you created for this
+CRON_SECRET=your_random_secret_here  # For securing cron job endpoint (optional but recommended)
 ```
 
 **Setup:**
-1. Get API keys from HubSpot, SendGrid, and EasyFlow
+1. Get API keys from HubSpot and SendGrid
 2. In Vercel dashboard → Project Settings → Environment Variables
-3. Add all environment variables
+3. Add all environment variables:
+   - `HUBSPOT_API_KEY`
+   - `SENDGRID_API_KEY` (the one you created - "Pragmatic Playbook")
+   - `SENDGRID_FROM_EMAIL` (optional)
+   - `SENDGRID_FROM_NAME` (optional)
+   - `CRON_SECRET` (optional, for cron job security)
 4. Redeploy
+
+**Email Sequences:**
+- Automatically scheduled when someone signs up
+- Stored in HubSpot custom properties
+- Processed hourly by Vercel cron job
+- Uses SendGrid API key you created
 
 **See `EMAIL-ARCHITECTURE.md` for detailed setup instructions.**
 
@@ -129,8 +139,14 @@ Edit the service cards in the `services` section to match your offerings.
 ### Email Integration
 
 - **HubSpot**: Saves contacts to CRM (if `HUBSPOT_API_KEY` is set)
-- **SendGrid**: Sends welcome emails (if `SENDGRID_API_KEY` is set)
-- **EasyFlow**: Enrolls contacts in email sequences (if `EASYFLOW_API_URL` and `EASYFLOW_API_KEY` are set)
+- **SendGrid**: Sends welcome emails and sequences (if `SENDGRID_API_KEY` is set)
+- **Cron Job**: Processes scheduled email sequences hourly (automated via Vercel)
+
+**How it works:**
+1. User signs up → Contact saved to HubSpot
+2. Welcome email sent immediately via SendGrid
+3. Email sequence scheduled (stored in HubSpot)
+4. Cron job runs hourly → Sends due emails via SendGrid
 
 See `EMAIL-ARCHITECTURE.md` and `EMAIL-WORKER-SETUP.md` for complete setup guide.
 
