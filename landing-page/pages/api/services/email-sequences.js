@@ -232,11 +232,16 @@ const templates = {
  * Schedule email sequence for a contact
  * Stores scheduled emails in HubSpot custom property for processing by cron job
  */
-async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-welcome') {
+async function scheduleSequence(email, firstName, contactId, sequenceName = 'foundersinfra-welcome') {
   const HUBSPOT_API_KEY = process.env.HUBSPOT_API_KEY;
   if (!HUBSPOT_API_KEY) {
     console.warn('HubSpot API key not configured, cannot schedule email sequence');
     return { success: false, error: 'HubSpot not configured' };
+  }
+
+  if (!contactId) {
+    console.warn('Contact ID not provided, cannot schedule email sequence in HubSpot.');
+    return { success: false, error: 'Contact ID missing' };
   }
 
   const sequence = sequences[sequenceName];
@@ -249,6 +254,11 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
 
   // Schedule each email in the sequence
   for (const emailConfig of sequence) {
+    // Skip the first email as it's sent immediately by signup.js
+    if (emailConfig.delayDays === 0) {
+      continue;
+    }
+
     const scheduledDate = new Date(signupDate);
     scheduledDate.setDate(scheduledDate.getDate() + emailConfig.delayDays);
 
@@ -262,7 +272,8 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
 
   // Store scheduled emails in HubSpot custom property
   try {
-    const emailParam = encodeURIComponent(email);
+    // Use contact ID endpoint (more reliable than email endpoint)
+    const contactEndpoint = `https://api.hubapi.com/contacts/v1/contact/vid/${contactId}/profile`;
     
     // Try different date formats - HubSpot date picker might need Unix timestamp in milliseconds
     // Format 1: Milliseconds timestamp (most common for HubSpot)
@@ -287,7 +298,7 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
     ];
     
     const response = await fetch(
-      `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${emailParam}`,
+      contactEndpoint,
       {
         method: 'POST',
         headers: {
@@ -309,7 +320,26 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
       
       // Extract which specific property failed
       let failedProperty = null;
-      if (errorData.errors && Array.isArray(errorData.errors)) {
+      let failedPropertyDetails = null;
+      
+      // Check validationResults first (HubSpot v1 API format)
+      if (errorData.validationResults && Array.isArray(errorData.validationResults)) {
+        errorData.validationResults.forEach(validationResult => {
+          if (validationResult.property && validationResult.isValid === false) {
+            failedProperty = validationResult.property;
+            failedPropertyDetails = {
+              property: validationResult.property,
+              isValid: validationResult.isValid,
+              error: validationResult.error || validationResult.message || 'Unknown validation error'
+            };
+            console.error(`❌ FAILED PROPERTY: "${failedProperty}"`);
+            console.error(`   Details:`, JSON.stringify(failedPropertyDetails, null, 2));
+          }
+        });
+      }
+      
+      // Also check errors array (alternative format)
+      if (!failedProperty && errorData.errors && Array.isArray(errorData.errors)) {
         errorData.errors.forEach(err => {
           if (err.category === 'VALIDATION_ERROR' && err.errors && Array.isArray(err.errors)) {
             err.errors.forEach(subErr => {
@@ -317,6 +347,11 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
                   subErr.errorType === 'INVALID_PROPERTY' ||
                   subErr.errorType === 'INVALID_VALUE') {
                 failedProperty = subErr.name || subErr.property || 'unknown';
+                failedPropertyDetails = {
+                  property: failedProperty,
+                  errorType: subErr.errorType,
+                  message: subErr.message || 'No message'
+                };
                 console.error(`❌ FAILED PROPERTY: "${failedProperty}"`);
                 console.error(`   Error Type: ${subErr.errorType}`);
                 console.error(`   Message: ${subErr.message || 'No message'}`);
@@ -326,6 +361,11 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
         });
       }
       
+      // Log the full validationResults for debugging
+      if (errorData.validationResults) {
+        console.error('Full validationResults:', JSON.stringify(errorData.validationResults, null, 2));
+      }
+      
       // Log full error details for debugging
       console.error('HubSpot API Error Details:', {
         status: response.status,
@@ -333,9 +373,11 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
         error: errorData,
         message: errorMessage,
         failedProperty: failedProperty,
-        propertiesAttempted: propertiesToSet.map(p => p.property),
+        failedPropertyDetails: failedPropertyDetails,
+        propertiesAttempted: propertiesToSet.map(p => ({ property: p.property, value: p.property === 'scheduled_emails' ? 'JSON string' : p.value })),
         dateValueUsed: dateValueMs,
-        dateValueISO: dateValueISO
+        dateValueISO: dateValueISO,
+        contactId: contactId
       });
       
       // If date property failed, try ISO format
@@ -350,7 +392,7 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
         ];
         
         const retryResponse = await fetch(
-          `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${emailParam}`,
+          contactEndpoint,
           {
             method: 'POST',
             headers: {
@@ -391,7 +433,8 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
           error: `Custom property "${failedProperty || 'unknown'}" not found or misconfigured. Please verify property names match exactly in HubSpot.`,
           warning: true,
           details: errorMessage,
-          failedProperty: failedProperty
+          failedProperty: failedProperty,
+          failedPropertyDetails: failedPropertyDetails
         };
       }
       

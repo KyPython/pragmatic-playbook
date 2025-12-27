@@ -338,6 +338,7 @@ export default async function handler(req, res) {
           const sequenceResult = await emailSequences.scheduleSequence(
             email,
             firstName || '',
+            contactId, // Pass contactId to scheduleSequence
             'foundersinfra-welcome'
           );
           
