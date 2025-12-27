@@ -208,9 +208,11 @@ export default async function handler(req, res) {
     });
   }
 
-  // Initialize variables for HubSpot contact tracking
+  // Initialize variables for HubSpot contact tracking and email sending
   let contactId = null;
   let hubspotSaved = false;
+  let emailSent = false;
+  let sequenceScheduled = false;
 
   try {
     // Build properties array for v1 API (format: [{property: 'name', value: 'value'}])
