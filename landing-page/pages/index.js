@@ -31,10 +31,18 @@ export default function Home() {
         setFirstName('');
         setLastName('');
       } else {
-        setMessage({ type: 'error', text: data.error || 'Something went wrong. Please try again.' });
+        // Use error message from API (already environment-aware)
+        setMessage({ 
+          type: 'error', 
+          text: data.error || 'Something went wrong. Please try again.' 
+        });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Network error. Please check your connection and try again.' });
+      // Network errors - always user-friendly
+      setMessage({ 
+        type: 'error', 
+        text: 'Network error. Please check your connection and try again.' 
+      });
     } finally {
       setSubmitting(false);
     }

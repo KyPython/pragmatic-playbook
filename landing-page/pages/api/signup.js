@@ -2,6 +2,40 @@
 // HubSpot: Contact management (CRM) only
 // SendGrid: All email sending (transactional + sequences)
 
+// Helper function to format error messages based on environment
+function formatErrorMessage(error, isDevelopment = false) {
+  const isDev = isDevelopment || process.env.NODE_ENV === 'development';
+  
+  // In production, return user-friendly messages
+  // In development, return technical details
+  if (!isDev) {
+    // Map technical errors to user-friendly messages
+    const errorMessage = error.message || error.toString();
+    
+    if (errorMessage.includes('Property values were not valid')) {
+      return 'There was an issue saving your information. Please try again or contact us directly.';
+    }
+    
+    if (errorMessage.includes('Failed to add contact to HubSpot')) {
+      return 'We received your signup, but had trouble saving it. Please try again.';
+    }
+    
+    if (errorMessage.includes('Invalid email format')) {
+      return 'Please enter a valid email address.';
+    }
+    
+    if (errorMessage.includes('Email is required')) {
+      return 'Please enter your email address.';
+    }
+    
+    // Generic user-friendly message for unknown errors
+    return 'Something went wrong. Please try again or contact us if the problem persists.';
+  }
+  
+  // In development, return full technical details
+  return error.message || error.toString();
+}
+
 export default async function handler(req, res) {
   // Dynamic import for SendGrid (only if needed)
   let sgMail = null;
@@ -18,8 +52,13 @@ export default async function handler(req, res) {
       console.warn('Email sequences service not available:', e.message);
     }
   }
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false, 
+      error: formatErrorMessage(new Error('Method not allowed'), isDevelopment)
+    });
   }
 
   const { email, firstName, lastName } = req.body;
@@ -46,12 +85,18 @@ export default async function handler(req, res) {
 
   // Validation
   if (!email) {
-    return res.status(400).json({ success: false, error: 'Email is required' });
+    return res.status(400).json({ 
+      success: false, 
+      error: formatErrorMessage(new Error('Email is required'), isDevelopment)
+    });
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return res.status(400).json({ success: false, error: 'Invalid email format' });
+    return res.status(400).json({ 
+      success: false, 
+      error: formatErrorMessage(new Error('Invalid email format'), isDevelopment)
+    });
   }
 
   // HubSpot API integration
@@ -144,7 +189,17 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to add contact to HubSpot');
+      const errorMessage = errorData.message || errorData.errors?.[0]?.message || 'Failed to add contact to HubSpot';
+      
+      // Log full error details for debugging (always log technical details)
+      console.error('HubSpot API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        message: errorMessage
+      });
+      
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -243,10 +298,26 @@ export default async function handler(req, res) {
       sequenceScheduled: sequenceScheduled,
     });
   } catch (error) {
-    console.error('HubSpot API Error:', error);
+    // Always log full error details for debugging
+    console.error('Signup API Error:', {
+      message: error.message,
+      stack: isDevelopment ? error.stack : undefined,
+      error: error
+    });
+    
+    // Return user-friendly message in production, technical in development
+    const userMessage = formatErrorMessage(error, isDevelopment);
+    
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to process signup',
+      error: userMessage,
+      // Include technical details in development mode only
+      ...(isDevelopment && { 
+        technicalDetails: {
+          message: error.message,
+          stack: error.stack
+        }
+      })
     });
   }
 }
