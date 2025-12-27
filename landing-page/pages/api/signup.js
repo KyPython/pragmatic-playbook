@@ -110,9 +110,36 @@ export default async function handler(req, res) {
       );
 
       if (updateResponse.ok) {
+        const updateData = await updateResponse.json();
+        const contactId = updateData.vid || updateData.id;
+
+        // Enroll existing contact in workflow if not already enrolled
+        const HUBSPOT_WORKFLOW_ID = process.env.HUBSPOT_WORKFLOW_ID;
+        if (HUBSPOT_WORKFLOW_ID && contactId) {
+          try {
+            const workflowResponse = await fetch(
+              `https://api.hubapi.com/automation/v3/workflows/${HUBSPOT_WORKFLOW_ID}/enrollments/contacts/${contactId}`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+                },
+              }
+            );
+            
+            if (workflowResponse.ok) {
+              console.log(`Contact ${contactId} enrolled in workflow`);
+            }
+          } catch (workflowError) {
+            console.warn('Workflow enrollment error:', workflowError);
+          }
+        }
+
         return res.json({
           success: true,
           message: 'Email already registered, updated subscription status and source tracking',
+          enrolled: !!HUBSPOT_WORKFLOW_ID,
         });
       }
     }
@@ -123,12 +150,40 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
+    const contactId = data.vid || data.id;
+
+    // Enroll contact in email sequence workflow (if configured)
+    const HUBSPOT_WORKFLOW_ID = process.env.HUBSPOT_WORKFLOW_ID;
+    if (HUBSPOT_WORKFLOW_ID && contactId) {
+      try {
+        const workflowResponse = await fetch(
+          `https://api.hubapi.com/automation/v3/workflows/${HUBSPOT_WORKFLOW_ID}/enrollments/contacts/${contactId}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+            },
+          }
+        );
+        
+        if (workflowResponse.ok) {
+          console.log(`Contact ${contactId} enrolled in workflow ${HUBSPOT_WORKFLOW_ID}`);
+        } else {
+          console.warn('Failed to enroll in workflow, but contact was created');
+        }
+      } catch (workflowError) {
+        console.warn('Workflow enrollment error:', workflowError);
+        // Don't fail the signup if workflow enrollment fails
+      }
+    }
 
     return res.json({
       success: true,
       message: 'Successfully added to mailing list',
-      contactId: data.id || data.vid,
+      contactId: contactId,
       source: leadSource,
+      enrolled: !!HUBSPOT_WORKFLOW_ID,
     });
   } catch (error) {
     console.error('HubSpot API Error:', error);

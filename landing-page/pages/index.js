@@ -295,7 +295,7 @@ export default function Home() {
         .hero {
           text-align: center;
           padding: 80px 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
           color: white;
           border-radius: 12px;
           margin: 40px 0;
@@ -340,7 +340,7 @@ export default function Home() {
 
         .btn-primary {
           background: white;
-          color: #667eea;
+          color: #3b82f6;
         }
 
         .btn-primary:hover:not(:disabled) {
@@ -356,16 +356,16 @@ export default function Home() {
 
         .btn-secondary:hover {
           background: white;
-          color: #667eea;
+          color: #3b82f6;
         }
 
         .contact .btn-secondary {
-          color: #667eea;
-          border: 2px solid #667eea;
+          color: #3b82f6;
+          border: 2px solid #3b82f6;
         }
 
         .contact .btn-secondary:hover {
-          background: #667eea;
+          background: #3b82f6;
           color: white;
         }
 
@@ -391,7 +391,7 @@ export default function Home() {
         h3 {
           font-size: 24px;
           margin-bottom: 10px;
-          color: #667eea;
+          color: #3b82f6;
         }
 
         .problem {
@@ -427,7 +427,7 @@ export default function Home() {
           content: "•";
           position: absolute;
           left: 0;
-          color: #667eea;
+          color: #3b82f6;
           font-weight: bold;
           font-size: 20px;
         }
@@ -485,7 +485,7 @@ export default function Home() {
         }
 
         .service-card.featured {
-          border-color: #667eea;
+          border-color: #3b82f6;
           background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
 
@@ -493,7 +493,7 @@ export default function Home() {
           position: absolute;
           top: -12px;
           right: 20px;
-          background: #667eea;
+          background: #3b82f6;
           color: white;
           padding: 4px 12px;
           border-radius: 12px;
@@ -504,7 +504,7 @@ export default function Home() {
         .price {
           font-size: 36px;
           font-weight: 700;
-          color: #667eea;
+          color: #3b82f6;
           margin: 10px 0;
         }
 
@@ -528,7 +528,7 @@ export default function Home() {
           content: "✓";
           position: absolute;
           left: 0;
-          color: #667eea;
+          color: #3b82f6;
           font-weight: bold;
         }
 
@@ -562,7 +562,7 @@ export default function Home() {
         .result-number {
           font-size: 48px;
           font-weight: 700;
-          color: #667eea;
+          color: #3b82f6;
           margin-bottom: 10px;
         }
 
@@ -574,7 +574,7 @@ export default function Home() {
         }
 
         .signup {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
           color: white;
           border-radius: 12px;
           padding: 60px 40px;
@@ -675,7 +675,7 @@ export default function Home() {
         }
 
         footer a {
-          color: #667eea;
+          color: #3b82f6;
           text-decoration: none;
         }
 
