@@ -1,5 +1,6 @@
-// API route for email signup (HubSpot + optional SendGrid integration)
-// Supports both HubSpot workflows and SendGrid transactional emails
+// API route for email signup
+// HubSpot: Contact management (CRM) only
+// SendGrid: All email sending (transactional + sequences)
 
 export default async function handler(req, res) {
   // Dynamic import for SendGrid (only if needed)
@@ -120,33 +121,13 @@ export default async function handler(req, res) {
         const updateData = await updateResponse.json();
         const contactId = updateData.vid || updateData.id;
 
-        // Enroll existing contact in workflow if not already enrolled
-        const HUBSPOT_WORKFLOW_ID = process.env.HUBSPOT_WORKFLOW_ID;
-        if (HUBSPOT_WORKFLOW_ID && contactId) {
-          try {
-            const workflowResponse = await fetch(
-              `https://api.hubapi.com/automation/v3/workflows/${HUBSPOT_WORKFLOW_ID}/enrollments/contacts/${contactId}`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-                },
-              }
-            );
-            
-            if (workflowResponse.ok) {
-              console.log(`Contact ${contactId} enrolled in workflow`);
-            }
-          } catch (workflowError) {
-            console.warn('Workflow enrollment error:', workflowError);
-          }
-        }
+        // Note: HubSpot is used for contact management only
+        // Email sequences are handled by SendGrid
 
         return res.json({
           success: true,
           message: 'Email already registered, updated subscription status and source tracking',
-          enrolled: !!HUBSPOT_WORKFLOW_ID,
+          hubspotSaved: true,
         });
       }
     }
@@ -158,32 +139,9 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     const contactId = data.vid || data.id;
-
-    // Enroll contact in email sequence workflow (if configured)
-    const HUBSPOT_WORKFLOW_ID = process.env.HUBSPOT_WORKFLOW_ID;
-    if (HUBSPOT_WORKFLOW_ID && contactId) {
-      try {
-        const workflowResponse = await fetch(
-          `https://api.hubapi.com/automation/v3/workflows/${HUBSPOT_WORKFLOW_ID}/enrollments/contacts/${contactId}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            },
-          }
-        );
-        
-        if (workflowResponse.ok) {
-          console.log(`Contact ${contactId} enrolled in workflow ${HUBSPOT_WORKFLOW_ID}`);
-        } else {
-          console.warn('Failed to enroll in workflow, but contact was created');
-        }
-      } catch (workflowError) {
-        console.warn('Workflow enrollment error:', workflowError);
-        // Don't fail the signup if workflow enrollment fails
-      }
-    }
+    
+    // Note: HubSpot is used for contact management only
+    // Email sequences are handled by SendGrid (see below)
 
     // Optional: Send welcome email via SendGrid (if configured)
     const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
@@ -247,8 +205,8 @@ export default async function handler(req, res) {
       message: 'Successfully added to mailing list',
       contactId: contactId,
       source: leadSource,
-      enrolled: !!HUBSPOT_WORKFLOW_ID,
       emailSent: !!SENDGRID_API_KEY,
+      hubspotSaved: !!HUBSPOT_API_KEY,
     });
   } catch (error) {
     console.error('HubSpot API Error:', error);
