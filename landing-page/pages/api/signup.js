@@ -115,24 +115,22 @@ export default async function handler(req, res) {
 
   try {
     // Build properties array for v1 API (format: [{property: 'name', value: 'value'}])
+    // Only include standard HubSpot properties that always exist
+    // Custom properties (signup_source, etc.) should be created in HubSpot first
     const properties = [
       { property: 'email', value: email },
       ...(firstName ? [{ property: 'firstname', value: firstName }] : []),
       ...(lastName ? [{ property: 'lastname', value: lastName }] : []),
       { property: 'lifecyclestage', value: 'subscriber' },
-      // Source tracking - standard HubSpot properties
+      // Standard HubSpot properties (always exist)
       { property: 'hs_analytics_source', value: 'LANDING_PAGE' },
       { property: 'hs_analytics_source_data_1', value: 'foundersinfra.com' },
       { property: 'hs_analytics_source_data_2', value: 'Email Signup Form' },
-      // Custom properties for clear source tracking (create these in HubSpot if needed)
-      { property: 'signup_source', value: 'Landing Page - Email Signup Form' },
-      { property: 'signup_url', value: sourceUrl },
-      { property: 'signup_date', value: new Date().toISOString() },
-      { property: 'marketing_source', value: marketingSource },
-      { property: 'lead_source', value: leadSource },
-      // Additional context
       { property: 'hs_lead_status', value: 'NEW' },
     ];
+    
+    // Note: Custom properties (signup_source, signup_url, etc.) should be created in HubSpot first
+    // See EMAIL-SEQUENCE-SETUP.md for instructions on creating custom properties
 
     // Try to create contact using v1 API
     const response = await fetch(HUBSPOT_API_URL, {
