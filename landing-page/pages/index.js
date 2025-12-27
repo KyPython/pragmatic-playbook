@@ -146,7 +146,7 @@ export default function Home() {
                 <li>Team training</li>
               </ul>
               <p className="deliverable">
-                <strong>I deliver:</strong> Deploy in 8 minutes, rollback in 2 minutes
+                <strong>I deliver:</strong> Automated deployment pipeline with rollback capability
               </p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function Home() {
                 <li>30-day action plan</li>
               </ul>
               <p className="deliverable">
-                <strong>I deliver:</strong> 70% code coverage in one week
+                <strong>I deliver:</strong> Testing strategy and implementation plan
               </p>
             </div>
 
@@ -184,23 +184,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="results">
-          <h2>Real Results</h2>
-          <div className="results-grid">
-            <div className="result-card">
-              <div className="result-number">$180K</div>
-              <div className="result-label">Recovered Annually</div>
-              <p>I helped a Series A startup reduce deployment time from 1.5 hours to 8 minutes. Features now ship in 2 days instead of 3 weeks.</p>
+        <section className="approach">
+          <h2>How I Work</h2>
+          <p className="section-intro">
+            I focus on practical, actionable improvements that you can implement immediately.
+          </p>
+          <div className="approach-grid">
+            <div className="approach-card">
+              <h3>Find Hidden Costs</h3>
+              <p>I identify technical debt that's costing you velocity. Every $1 of debt costs $3–5 in future development time. I'll show you exactly where it is and how much it's costing.</p>
             </div>
-            <div className="result-card">
-              <div className="result-number">70%</div>
-              <div className="result-label">Code Coverage</div>
-              <p>I helped a team achieve this in one week. Automated testing now catches 90% of bugs before production.</p>
+            <div className="approach-card">
+              <h3>Prioritize What Matters</h3>
+              <p>Not everything needs fixing. I help you focus on the 20% of issues causing 80% of your problems. You'll get a clear roadmap, not a wish list.</p>
             </div>
-            <div className="result-card">
-              <div className="result-number">2 min</div>
-              <div className="result-label">Rollback Time</div>
-              <p>I set this up for teams so they can deploy on Friday 5 PM with confidence. Rollback in 2 minutes if something breaks.</p>
+            <div className="approach-card">
+              <h3>Build Confidence</h3>
+              <p>I set up CI/CD, testing, and monitoring so you can deploy with confidence. No more "only Monday mornings" or "hope it works" deployments.</p>
             </div>
           </div>
         </section>
@@ -539,38 +539,36 @@ export default function Home() {
           font-size: 14px;
         }
 
-        .results {
+        .approach {
           background: #f8f9fa;
           border-radius: 12px;
           padding: 40px;
         }
 
-        .results-grid {
+        .approach-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           gap: 30px;
           margin-top: 40px;
         }
 
-        .result-card {
+        .approach-card {
           background: white;
           padding: 30px;
           border-radius: 8px;
-          text-align: center;
+          text-align: left;
         }
 
-        .result-number {
-          font-size: 48px;
-          font-weight: 700;
-          color: #3b82f6;
-          margin-bottom: 10px;
-        }
-
-        .result-label {
-          font-size: 18px;
-          font-weight: 600;
-          color: #666;
+        .approach-card h3 {
+          font-size: 24px;
           margin-bottom: 15px;
+          color: #3b82f6;
+        }
+
+        .approach-card p {
+          color: #666;
+          line-height: 1.6;
+          margin: 0;
         }
 
         .signup {
@@ -705,7 +703,7 @@ export default function Home() {
             grid-template-columns: 1fr;
           }
 
-          .service-grid, .results-grid {
+          .service-grid, .approach-grid {
             grid-template-columns: 1fr;
           }
         }
