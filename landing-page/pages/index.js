@@ -128,8 +128,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="service-card featured">
-              <div className="badge">Most Popular</div>
+            <div className="service-card">
               <h3>Architecture Review</h3>
               <div className="price">$2,500</div>
               <p className="duration">8 hours</p>
