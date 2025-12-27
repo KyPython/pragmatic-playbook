@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-**See `README.md` for setup overview. See `EMAIL-ARCHITECTURE.md` for architecture details.**
+**See `README.md` for setup overview. See `AUTOMATED-EMAIL-SETUP.md` for email setup details.**
 
 ## Common Issues
 

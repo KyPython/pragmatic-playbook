@@ -52,7 +52,8 @@ CRON_SECRET=your_random_secret_here  # Optional, for securing cron job
 ## Documentation
 
 - **`DEPLOY.md`** - Detailed deployment guide
-- **`HUBSPOT-WORKFLOW-SETUP.md`** - Step-by-step HubSpot workflow setup for email sequences
+- **`AUTOMATED-EMAIL-SETUP.md`** - Complete setup guide for automated email sequences
+- **`DNS-SETUP-NAMECHEAP.md`** - DNS setup for SendGrid domain authentication
 - **`TROUBLESHOOTING.md`** - Common issues and solutions
 
 ## Custom Domain Setup
@@ -109,17 +110,19 @@ Edit the service cards in the `services` section to match your offerings.
 
 ### Email Integration
 
-- **HubSpot**: Saves contacts to CRM and triggers email workflows automatically
+- **HubSpot**: Saves contacts to CRM
+- **SendGrid**: Sends automated email sequences
 
 **How it works:**
 1. User signs up → Contact saved to HubSpot with `lifecyclestage = 'subscriber'`
-2. **Marketing Hub Starter:** Send emails manually from HubSpot
-3. **Marketing Hub Professional:** Workflows automatically send email sequences
+2. Welcome email → Sent immediately via SendGrid
+3. Email sequence scheduled → Stored in HubSpot custom properties
+4. Cron job runs hourly → Sends due emails automatically
 
-**Setup Options:**
-- **Manual (Starter):** See `SIMPLE-EMAIL-SOLUTION.md` for manual email sending
-- **Automated (Professional):** See `HUBSPOT-WORKFLOW-SETUP.md` for workflow setup
-- **SendGrid:** See `SIMPLE-EMAIL-SOLUTION.md` for SendGrid alternative
+**Setup:**
+- See `AUTOMATED-EMAIL-SETUP.md` for complete setup guide
+- Create HubSpot custom properties: `scheduled_emails`, `email_sequence`, `sequence_start_date`
+- Add SendGrid API key to Vercel environment variables
 
 ## Build & Deploy
 
