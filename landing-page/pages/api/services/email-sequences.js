@@ -275,11 +275,16 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
     // Use contact ID endpoint (more reliable than email endpoint)
     const contactEndpoint = `https://api.hubapi.com/contacts/v1/contact/vid/${contactId}/profile`;
     
+    // HubSpot date picker requires date at midnight (00:00:00 UTC)
+    // Create a new date at midnight for today
+    const dateAtMidnight = new Date(signupDate);
+    dateAtMidnight.setUTCHours(0, 0, 0, 0); // Set to midnight UTC
+    
     // Try different date formats - HubSpot date picker might need Unix timestamp in milliseconds
-    // Format 1: Milliseconds timestamp (most common for HubSpot)
-    const dateValueMs = signupDate.getTime();
+    // Format 1: Milliseconds timestamp at midnight (HubSpot requirement)
+    const dateValueMs = dateAtMidnight.getTime();
     // Format 2: ISO string (fallback)
-    const dateValueISO = signupDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const dateValueISO = dateAtMidnight.toISOString().split('T')[0]; // YYYY-MM-DD format
     
     // Try setting properties one at a time to isolate which one fails
     const propertiesToSet = [
@@ -291,10 +296,10 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
         property: 'email_sequence',
         value: sequenceName,
       },
-      {
-        property: 'sequence_start_date',
-        value: dateValueMs, // Try milliseconds first
-      },
+            {
+              property: 'sequence_start_date',
+              value: dateValueISO, // Use ISO format (YYYY-MM-DD) - HubSpot date picker prefers this
+            },
     ];
     
     const response = await fetch(
@@ -325,15 +330,20 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
       // Check validationResults first (HubSpot v1 API format)
       if (errorData.validationResults && Array.isArray(errorData.validationResults)) {
         errorData.validationResults.forEach(validationResult => {
-          if (validationResult.property && validationResult.isValid === false) {
-            failedProperty = validationResult.property;
+          // Check both 'property' and 'name' fields (HubSpot uses different fields)
+          const propertyName = validationResult.property || validationResult.name;
+          if (propertyName && (validationResult.isValid === false || validationResult.error)) {
+            failedProperty = propertyName;
             failedPropertyDetails = {
-              property: validationResult.property,
+              property: propertyName,
               isValid: validationResult.isValid,
-              error: validationResult.error || validationResult.message || 'Unknown validation error'
+              error: validationResult.error || 'Unknown validation error',
+              message: validationResult.message || 'No message'
             };
             console.error(`❌ FAILED PROPERTY: "${failedProperty}"`);
-            console.error(`   Details:`, JSON.stringify(failedPropertyDetails, null, 2));
+            console.error(`   Error: ${failedPropertyDetails.error}`);
+            console.error(`   Message: ${failedPropertyDetails.message}`);
+            console.error(`   Full Details:`, JSON.stringify(failedPropertyDetails, null, 2));
           }
         });
       }
@@ -382,12 +392,12 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
       
       // If date property failed, try ISO format
       if (failedProperty === 'sequence_start_date') {
-        console.log('⚠️  Date property failed with milliseconds, trying ISO format...');
+        console.log('⚠️  Date property failed with milliseconds, trying ISO format (YYYY-MM-DD)...');
         const retryProperties = [
           ...propertiesToSet.filter(p => p.property !== 'sequence_start_date'),
           {
             property: 'sequence_start_date',
-            value: dateValueISO, // Try ISO format
+            value: dateValueISO, // Try ISO format (YYYY-MM-DD)
           },
         ];
         
@@ -411,6 +421,10 @@ async function scheduleSequence(email, firstName, contactId, sequenceName = 'fou
         } else {
           const retryErrorData = await retryResponse.json();
           console.error('❌ Retry with ISO format also failed:', retryErrorData);
+          // Log validation results if available
+          if (retryErrorData.validationResults) {
+            console.error('Retry validationResults:', JSON.stringify(retryErrorData.validationResults, null, 2));
+          }
         }
       }
       
