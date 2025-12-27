@@ -136,10 +136,8 @@ export default async function handler(req, res) {
 
   try {
     // Build properties array for v1 API (format: [{property: 'name', value: 'value'}])
-    // Only include standard HubSpot properties that always exist
-    // Custom properties (signup_source, etc.) should be created in HubSpot first
-    // Only use core properties that always exist in HubSpot
-    // Avoid any custom or optional properties that might not exist
+    // Use ONLY core properties that always exist in every HubSpot account
+    // This prevents "Property values were not valid" errors
     const properties = [
       { property: 'email', value: email },
       ...(firstName ? [{ property: 'firstname', value: firstName }] : []),
@@ -147,18 +145,8 @@ export default async function handler(req, res) {
       { property: 'lifecyclestage', value: 'subscriber' },
     ];
     
-    // Only add analytics properties if they exist (won't break if missing)
-    // These are standard but might not be available in all HubSpot accounts
-    try {
-      properties.push(
-        { property: 'hs_analytics_source', value: 'LANDING_PAGE' },
-        { property: 'hs_analytics_source_data_1', value: 'foundersinfra.com' },
-        { property: 'hs_analytics_source_data_2', value: 'Email Signup Form' }
-      );
-    } catch (e) {
-      // If adding analytics properties fails, continue without them
-      console.warn('Could not add analytics properties:', e);
-    }
+    // Note: Analytics properties (hs_analytics_source, etc.) are optional
+    // and might not exist in all HubSpot accounts, so we skip them to avoid errors
     
     // Note: Custom properties (signup_source, signup_url, etc.) should be created in HubSpot first
     // See EMAIL-SEQUENCE-SETUP.md for instructions on creating custom properties
@@ -195,18 +183,25 @@ export default async function handler(req, res) {
         }
       );
 
+      let contactId = null;
       if (updateResponse.ok) {
         const updateData = await updateResponse.json();
-        const contactId = updateData.vid || updateData.id;
-
-        // Note: HubSpot is used for contact management only
-        // Email sequences are handled by SendGrid
-
-        return res.json({
-          success: true,
-          message: 'Email already registered, updated subscription status and source tracking',
-          hubspotSaved: true,
+        contactId = updateData.vid || updateData.id;
+        console.log(`Updated existing contact in HubSpot: ${contactId}`);
+        // Continue to send welcome email (don't return early)
+      } else {
+        // If update failed, log but continue (don't fail signup)
+        let updateErrorData;
+        try {
+          updateErrorData = await updateResponse.json();
+        } catch (e) {
+          updateErrorData = { message: `HTTP ${updateResponse.status}` };
+        }
+        console.error('HubSpot update error (contact exists but update failed):', {
+          status: updateResponse.status,
+          error: updateErrorData
         });
+        // Continue anyway - we'll try to send email
       }
     }
 
@@ -239,8 +234,15 @@ export default async function handler(req, res) {
       throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    const contactId = data.vid || data.id;
+    let contactId = null;
+    try {
+      const data = await response.json();
+      contactId = data.vid || data.id;
+      console.log(`Created new contact in HubSpot: ${contactId}`);
+    } catch (parseError) {
+      console.error('Failed to parse HubSpot response:', parseError);
+      // Continue anyway - contact might have been created
+    }
     
     // Note: HubSpot is used for contact management only
     // Email sequences are handled by SendGrid (see below)
