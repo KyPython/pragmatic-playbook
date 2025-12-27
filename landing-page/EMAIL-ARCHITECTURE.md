@@ -114,6 +114,12 @@ SENDGRID_FROM_EMAIL=founders@foundersinfra.com
 SENDGRID_FROM_NAME=Founders Infrastructure
 ```
 
+### EasyFlow (Required for Email Sequences)
+```bash
+EASYFLOW_API_URL=https://your-easyflow-domain.com
+EASYFLOW_API_KEY=your_easyflow_api_key
+```
+
 ## Email Sequences
 
 Email sequences are handled by **SendGrid**, not HubSpot workflows.
@@ -175,7 +181,7 @@ Email sequences are handled by **SendGrid**, not HubSpot workflows.
 
 1. ✅ HubSpot configured (contact management)
 2. ✅ SendGrid configured (email sending)
-3. ⏳ Set up email sequences (your choice of method)
+3. ✅ EasyFlow email worker configured (email sequences)
 4. ⏳ Test end-to-end flow
 
 ---

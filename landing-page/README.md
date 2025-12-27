@@ -60,8 +60,14 @@ SENDGRID_FROM_EMAIL=founders@foundersinfra.com  # Optional
 SENDGRID_FROM_NAME=Founders Infrastructure       # Optional
 ```
 
+### Required for Email Sequences (EasyFlow)
+```bash
+EASYFLOW_API_URL=https://your-easyflow-domain.com
+EASYFLOW_API_KEY=your_easyflow_api_key  # API key you created for this
+```
+
 **Setup:**
-1. Get API keys from HubSpot and SendGrid
+1. Get API keys from HubSpot, SendGrid, and EasyFlow
 2. In Vercel dashboard → Project Settings → Environment Variables
 3. Add all environment variables
 4. Redeploy
@@ -124,8 +130,9 @@ Edit the service cards in the `services` section to match your offerings.
 
 - **HubSpot**: Saves contacts to CRM (if `HUBSPOT_API_KEY` is set)
 - **SendGrid**: Sends welcome emails (if `SENDGRID_API_KEY` is set)
+- **EasyFlow**: Enrolls contacts in email sequences (if `EASYFLOW_API_URL` and `EASYFLOW_API_KEY` are set)
 
-See `EMAIL-ARCHITECTURE.md` for complete setup guide.
+See `EMAIL-ARCHITECTURE.md` and `EMAIL-WORKER-SETUP.md` for complete setup guide.
 
 ## Build & Deploy
 

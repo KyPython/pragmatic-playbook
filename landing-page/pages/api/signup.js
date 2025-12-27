@@ -194,9 +194,44 @@ export default async function handler(req, res) {
           text: `Hi ${firstName || 'there'},\n\nWelcome! You've taken the first step toward building production-grade infrastructure.\n\nOver the next 8 weeks, you'll learn:\n- How to detect technical debt before it costs $50k\n- How to build MVPs in 2 weeks instead of 3 months\n- How to deploy on Friday 5 PM with confidence\n\nQuestions? Just reply to this email.\n\nLet's build something great,\n${SENDGRID_FROM_NAME}\n\n---\nThe Founder's Infrastructure Playbook\nfoundersinfra.com`,
         });
         console.log(`Welcome email sent via SendGrid to ${email}`);
+        emailSent = true;
       } catch (sendGridError) {
         console.error('SendGrid error:', sendGridError);
         // Don't fail signup if email fails
+      }
+    }
+
+    // Enroll in EasyFlow email sequence (if configured)
+    const EASYFLOW_API_URL = process.env.EASYFLOW_API_URL;
+    const EASYFLOW_API_KEY = process.env.EASYFLOW_API_KEY;
+    let easyflowEnrolled = false;
+
+    if (EASYFLOW_API_URL && EASYFLOW_API_KEY && emailSent) {
+      try {
+        const easyflowResponse = await fetch(`${EASYFLOW_API_URL}/api/email-sequences/enroll`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${EASYFLOW_API_KEY}`,
+          },
+          body: JSON.stringify({
+            email,
+            firstName: firstName || '',
+            lastName: lastName || '',
+            sequence: 'foundersinfra-welcome', // Default sequence name
+          }),
+        });
+
+        if (easyflowResponse.ok) {
+          console.log(`Enrolled in EasyFlow email sequence: ${email}`);
+          easyflowEnrolled = true;
+        } else {
+          const errorText = await easyflowResponse.text();
+          console.error('EasyFlow enrollment failed:', errorText);
+        }
+      } catch (easyflowError) {
+        console.error('EasyFlow enrollment error:', easyflowError);
+        // Don't fail signup if EasyFlow enrollment fails
       }
     }
 
@@ -205,8 +240,9 @@ export default async function handler(req, res) {
       message: 'Successfully added to mailing list',
       contactId: contactId,
       source: leadSource,
-      emailSent: !!SENDGRID_API_KEY,
+      emailSent: emailSent,
       hubspotSaved: !!HUBSPOT_API_KEY,
+      easyflowEnrolled: easyflowEnrolled,
     });
   } catch (error) {
     console.error('HubSpot API Error:', error);
