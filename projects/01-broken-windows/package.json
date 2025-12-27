@@ -1,0 +1,19 @@
+{
+  "name": "01-broken-windows",
+  "version": "1.0.0",
+  "description": "Project 1: Broken Windows - Technical debt detection and cost calculation",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "start": "node starter/index.js",
+    "start:solution": "node solution/index.js"
+  },
+  "keywords": ["technical-debt", "refactoring", "pragmatic-programmer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

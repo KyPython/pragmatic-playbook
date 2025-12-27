@@ -1,0 +1,8 @@
+# Example contacts file
+# Add one email per line
+# Lines starting with # are ignored
+
+# founder1@startup.com
+# founder2@startup.com
+# cto@company.com
+

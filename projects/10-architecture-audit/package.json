@@ -1,0 +1,16 @@
+{
+  "name": "10-architecture-audit",
+  "version": "1.0.0",
+  "description": "Project 10: Architecture Audit - 90-day improvement plan with metrics",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": ["architecture", "audit", "technical-debt", "pragmatic-programmer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

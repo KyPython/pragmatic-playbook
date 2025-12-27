@@ -1,0 +1,16 @@
+{
+  "name": "09-deployment-strategies",
+  "version": "1.0.0",
+  "description": "Project 9: Deployment Strategies - CI/CD, monitoring, and runbooks",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": ["ci-cd", "deployment", "monitoring", "pragmatic-programmer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

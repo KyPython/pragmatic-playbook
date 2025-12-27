@@ -1,0 +1,19 @@
+{
+  "name": "07-reversible-decisions-solution",
+  "version": "1.0.0",
+  "description": "Solution for Project 7: Reversible Decisions",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node index.js",
+    "build": "echo 'Building...'",
+    "deploy": "bash deploy.sh"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+

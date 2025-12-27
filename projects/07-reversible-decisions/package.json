@@ -1,0 +1,21 @@
+{
+  "name": "07-reversible-decisions",
+  "version": "1.0.0",
+  "description": "Project 7: Reversible Decisions - Feature flags and safe deployment patterns",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node starter/index.js",
+    "start:solution": "node solution/index.js"
+  },
+  "keywords": ["feature-flags", "deployment", "reversible", "pragmatic-programmer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+

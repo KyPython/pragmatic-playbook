@@ -1,0 +1,14 @@
+{
+  "name": "03-dry-refactor-solution",
+  "version": "1.0.0",
+  "description": "Solution for Project 3: DRY Refactor",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node index.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

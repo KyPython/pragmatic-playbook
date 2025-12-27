@@ -1,0 +1,18 @@
+{
+  "name": "02-tracer-bullets",
+  "version": "1.0.0",
+  "description": "Project 2: Tracer Bullets - MVP velocity and feature prioritization",
+  "scripts": {
+    "test": "jest",
+    "dev": "cd starter && npm run dev",
+    "dev:solution": "cd solution && npm run dev",
+    "build": "cd solution && npm run build"
+  },
+  "keywords": ["mvp", "nextjs", "tracer-bullets", "pragmatic-programmer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

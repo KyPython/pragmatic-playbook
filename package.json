@@ -1,0 +1,28 @@
+{
+  "name": "pragmatic-playbook",
+  "version": "1.0.0",
+  "description": "The Founder's Infrastructure Playbook - 8-week course on Pragmatic Programmer principles",
+  "private": true,
+  "workspaces": [
+    "projects/*"
+  ],
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "test": "bash scripts/test-all.sh",
+    "test:project": "bash scripts/test-all.sh",
+    "build": "bash scripts/build.sh",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

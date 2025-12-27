@@ -1,0 +1,21 @@
+{
+  "name": "email-sender",
+  "version": "1.0.0",
+  "description": "Send email sequences via HubSpot",
+  "main": "send-emails.js",
+  "scripts": {
+    "send:launch": "node send-emails.js launch",
+    "send:consulting": "node send-emails.js consulting",
+    "send:nurture": "node send-emails.js nurture",
+    "send:custom": "node send-emails.js custom"
+  },
+  "keywords": ["hubspot", "email", "marketing"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.2.0"
+  }
+}
+

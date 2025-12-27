@@ -1,0 +1,13 @@
+{
+  "name": "01-broken-windows-starter",
+  "version": "1.0.0",
+  "description": "Starter code for Project 1: Broken Windows",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+

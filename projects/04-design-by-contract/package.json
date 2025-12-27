@@ -1,0 +1,18 @@
+{
+  "name": "04-design-by-contract",
+  "version": "1.0.0",
+  "description": "Project 4: Design by Contract - Precondition checks and crash-early philosophy",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node starter/index.js",
+    "start:solution": "node solution/index.js"
+  },
+  "keywords": ["design-by-contract", "validation", "preconditions", "pragmatic-programmer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

@@ -1,0 +1,13 @@
+{
+  "name": "06-testing-pyramid-starter",
+  "version": "1.0.0",
+  "description": "Starter code for Project 6: Testing Pyramid",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+

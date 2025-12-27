@@ -1,0 +1,10 @@
+{
+  "name": "04-design-by-contract-starter",
+  "version": "1.0.0",
+  "description": "Starter code for Project 4: Design by Contract",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
+

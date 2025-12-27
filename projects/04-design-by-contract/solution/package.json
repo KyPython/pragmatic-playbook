@@ -1,0 +1,14 @@
+{
+  "name": "04-design-by-contract-solution",
+  "version": "1.0.0",
+  "description": "Solution for Project 4: Design by Contract",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node index.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

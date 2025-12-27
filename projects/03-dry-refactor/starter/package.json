@@ -1,0 +1,10 @@
+{
+  "name": "03-dry-refactor-starter",
+  "version": "1.0.0",
+  "description": "Starter code for Project 3: DRY Refactor",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
+

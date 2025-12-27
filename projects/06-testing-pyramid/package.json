@@ -1,0 +1,24 @@
+{
+  "name": "06-testing-pyramid",
+  "version": "1.0.0",
+  "description": "Project 6: Testing Pyramid - Unit, integration, and E2E testing strategies",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:e2e": "jest --testPathPattern=e2e",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": ["testing", "test-pyramid", "unit-tests", "integration-tests", "e2e"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+
