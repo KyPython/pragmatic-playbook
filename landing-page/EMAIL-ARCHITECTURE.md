@@ -47,6 +47,8 @@ SENDGRID_FROM_EMAIL=founders@foundersinfra.com  # Optional, defaults to this
 SENDGRID_FROM_NAME=Founders Infrastructure       # Optional, defaults to this
 ```
 
+**API Key Name:** `Pragmatic Playbook` (in SendGrid dashboard)
+
 **What it does:**
 - Sends welcome emails immediately
 - Handles all email delivery

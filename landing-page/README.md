@@ -55,7 +55,7 @@ HUBSPOT_API_KEY=your_hubspot_api_key
 
 ### Required for Email Sending (SendGrid)
 ```bash
-SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_API_KEY=your_sendgrid_api_key  # API Key Name: "Pragmatic Playbook"
 SENDGRID_FROM_EMAIL=founders@foundersinfra.com  # Optional
 SENDGRID_FROM_NAME=Founders Infrastructure       # Optional
 ```
