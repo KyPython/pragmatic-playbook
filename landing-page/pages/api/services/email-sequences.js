@@ -1,5 +1,5 @@
-// Email sequence service using SendGrid
-// Stores scheduled emails in HubSpot custom properties and processes via cron job
+// Automated email sequence service using SendGrid
+// Schedules emails and processes them via cron job
 
 const sgMail = require('@sendgrid/mail');
 
@@ -7,32 +7,32 @@ const sgMail = require('@sendgrid/mail');
 const sequences = {
   'foundersinfra-welcome': [
     {
-      delay: 0, // Immediate (already sent as welcome email)
+      delayDays: 0, // Immediate welcome email
       subject: 'Welcome to The Founder\'s Infrastructure Playbook',
       template: 'welcome',
     },
     {
-      delay: 2, // 2 days
+      delayDays: 2, // 2 days after signup
       subject: 'The $50K Technical Debt Problem',
       template: 'pain-point',
     },
     {
-      delay: 5, // 5 days
+      delayDays: 5, // 5 days after signup
       subject: 'How to Recover Lost Velocity',
       template: 'roi',
     },
     {
-      delay: 9, // 9 days
+      delayDays: 9, // 9 days after signup
       subject: 'Real Results from Infrastructure Consulting',
       template: 'social-proof',
     },
     {
-      delay: 13, // 13 days
+      delayDays: 13, // 13 days after signup
       subject: 'Ready to Recover $50K+ in Lost Velocity?',
       template: 'final-push',
     },
     {
-      delay: 20, // 20 days
+      delayDays: 20, // 20 days after signup
       subject: 'Following up on infrastructure consulting',
       template: 'follow-up',
     },
@@ -41,6 +41,42 @@ const sequences = {
 
 // Email templates
 const templates = {
+  welcome: (firstName) => ({
+    subject: 'Welcome to The Founder\'s Infrastructure Playbook',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 40px 20px; text-align: center;">
+            <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              <tr><td style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Welcome to The Founder's Infrastructure Playbook</h1>
+              </td></tr>
+              <tr><td style="padding: 40px 30px;">
+                <p style="margin: 0 0 20px 0; color: #333; font-size: 16px; line-height: 1.6;">Hi ${firstName || 'there'},</p>
+                <p style="margin: 0 0 20px 0; color: #333; font-size: 16px; line-height: 1.6;">Welcome! You've taken the first step toward building production-grade infrastructure.</p>
+                <p style="margin: 0 0 20px 0; color: #333; font-size: 16px; line-height: 1.6;">Over the next 8 weeks, you'll learn:</p>
+                <ul style="margin: 0 0 20px 0; padding-left: 25px; color: #333; font-size: 16px; line-height: 1.8;">
+                  <li style="margin-bottom: 10px;">How to detect technical debt before it costs $50k</li>
+                  <li style="margin-bottom: 10px;">How to build MVPs in 2 weeks instead of 3 months</li>
+                  <li style="margin-bottom: 10px;">How to deploy on Friday 5 PM with confidence</li>
+                </ul>
+                <p style="margin: 0 0 30px 0; color: #333; font-size: 16px; line-height: 1.6;">Questions? Just reply to this email.</p>
+                <p style="margin: 0; color: #333; font-size: 16px; line-height: 1.6;">Let's build something great,<br><strong>Founders Infrastructure</strong></p>
+              </td></tr>
+              <tr><td style="padding: 30px; background-color: #f8f9fa; text-align: center; border-top: 1px solid #e0e0e0;">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">The Founder's Infrastructure Playbook</p>
+                <p style="margin: 0; color: #666; font-size: 14px;"><a href="https://foundersinfra.com" style="color: #3b82f6; text-decoration: none;">foundersinfra.com</a></p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `,
+  }),
   'pain-point': (firstName) => ({
     subject: 'The $50K Technical Debt Problem',
     html: `
@@ -194,7 +230,7 @@ const templates = {
 
 /**
  * Schedule email sequence for a contact
- * Stores scheduled emails in HubSpot custom properties
+ * Stores scheduled emails in HubSpot custom property for processing by cron job
  */
 async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-welcome') {
   const HUBSPOT_API_KEY = process.env.HUBSPOT_API_KEY;
@@ -213,17 +249,14 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
 
   // Schedule each email in the sequence
   for (const emailConfig of sequence) {
-    if (emailConfig.delay === 0) {
-      continue; // Skip welcome email (already sent)
-    }
-
     const scheduledDate = new Date(signupDate);
-    scheduledDate.setDate(scheduledDate.getDate() + emailConfig.delay);
+    scheduledDate.setDate(scheduledDate.getDate() + emailConfig.delayDays);
 
     scheduledEmails.push({
       subject: emailConfig.subject,
       template: emailConfig.template,
       scheduledFor: scheduledDate.toISOString(),
+      sent: false,
     });
   }
 
@@ -284,7 +317,7 @@ function getEmailTemplate(templateName, firstName) {
 /**
  * Send email via SendGrid
  */
-async function sendEmailViaSendGrid(email, subject, html, firstName) {
+async function sendEmailViaSendGrid(email, subject, html) {
   const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
   const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'founders@foundersinfra.com';
   const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Founders Infrastructure';
