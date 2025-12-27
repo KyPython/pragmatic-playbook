@@ -93,7 +93,7 @@ Visit `http://localhost:3000`
 
 Edit `pages/index.js` and replace:
 ```javascript
-href="https://calendly.com/your-calendar"
+href="https://calendly.com/kyjahn-smith/consultation"
 ```
 with your actual Calendly or booking link.
 

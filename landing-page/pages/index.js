@@ -241,7 +241,7 @@ export default function Home() {
           <h2>Ready to Recover Lost Velocity?</h2>
           <p>Let's discuss how I can help your team ship faster and deploy with confidence.</p>
           <div className="contact-buttons">
-            <a href="https://calendly.com/your-calendar" className="btn btn-primary btn-large">
+            <a href="https://calendly.com/kyjahn-smith/consultation" className="btn btn-primary btn-large">
               Book a Free 15-Minute Call
             </a>
             <a href="mailto:hello@foundersinfra.com" className="btn btn-secondary btn-large">
