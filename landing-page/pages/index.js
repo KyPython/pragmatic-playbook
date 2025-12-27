@@ -77,7 +77,7 @@ export default function Home() {
         <section id="problem" className="problem">
           <h2>Your Team Used to Ship 1 Feature/Week. Now It Takes 3 Weeks.</h2>
           <p>
-            You're hitting the velocity wall. Your team has shipped for 6+ months, and now:
+            I see this all the time. Your team has shipped for 6+ months, and now:
           </p>
           <ul>
             <li>Features take 2-3 weeks instead of 2 days</li>
@@ -113,7 +113,7 @@ export default function Home() {
                 <li>90-day action plan</li>
               </ul>
               <p className="deliverable">
-                <strong>Deliverable:</strong> 10-page technical audit report
+                <strong>I deliver:</strong> 10-page technical audit report
               </p>
             </div>
 
@@ -130,7 +130,7 @@ export default function Home() {
                 <li>Team interviews</li>
               </ul>
               <p className="deliverable">
-                <strong>Deliverable:</strong> 15-page architecture assessment + roadmap
+                <strong>I deliver:</strong> 15-page architecture assessment + roadmap
               </p>
             </div>
 
@@ -146,7 +146,7 @@ export default function Home() {
                 <li>Team training</li>
               </ul>
               <p className="deliverable">
-                <strong>Result:</strong> Deploy in 8 minutes, rollback in 2 minutes
+                <strong>I deliver:</strong> Deploy in 8 minutes, rollback in 2 minutes
               </p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function Home() {
                 <li>30-day action plan</li>
               </ul>
               <p className="deliverable">
-                <strong>Result:</strong> 70% code coverage in one week
+                <strong>I deliver:</strong> 70% code coverage in one week
               </p>
             </div>
 
@@ -178,7 +178,7 @@ export default function Home() {
                 <li>Documentation</li>
               </ul>
               <p className="deliverable">
-                <strong>Result:</strong> One module goes from nightmare to manageable
+                <strong>I deliver:</strong> One module goes from nightmare to manageable
               </p>
             </div>
           </div>
@@ -190,24 +190,24 @@ export default function Home() {
             <div className="result-card">
               <div className="result-number">$180K</div>
               <div className="result-label">Recovered Annually</div>
-              <p>Series A startup reduced deployment time from 1.5 hours to 8 minutes. Features now ship in 2 days instead of 3 weeks.</p>
+              <p>I helped a Series A startup reduce deployment time from 1.5 hours to 8 minutes. Features now ship in 2 days instead of 3 weeks.</p>
             </div>
             <div className="result-card">
               <div className="result-number">70%</div>
               <div className="result-label">Code Coverage</div>
-              <p>Achieved in one week. Automated testing now catches 90% of bugs before production.</p>
+              <p>I helped a team achieve this in one week. Automated testing now catches 90% of bugs before production.</p>
             </div>
             <div className="result-card">
               <div className="result-number">2 min</div>
               <div className="result-label">Rollback Time</div>
-              <p>Deploy on Friday 5 PM with confidence. Rollback in 2 minutes if something breaks.</p>
+              <p>I set this up for teams so they can deploy on Friday 5 PM with confidence. Rollback in 2 minutes if something breaks.</p>
             </div>
           </div>
         </section>
 
         <section id="signup" className="signup">
           <h2>Get Free Infrastructure Resources</h2>
-          <p>Join founders learning to build production-grade infrastructure. Get weekly insights, case studies, and practical guides.</p>
+          <p>I share weekly insights, case studies, and practical guides on building production-grade infrastructure.</p>
           
           <form onSubmit={handleSubmit} className="signup-form">
             <div className="form-row">
@@ -238,7 +238,7 @@ export default function Home() {
               {submitting ? 'Signing up...' : 'Get Free Resources'}
             </button>
             <p className="form-note">
-              No spam. Unsubscribe anytime. We respect your inbox.
+              No spam. Unsubscribe anytime. I respect your inbox.
             </p>
             {message.text && (
               <div className={`message ${message.type}`}>
@@ -256,7 +256,7 @@ export default function Home() {
               Book a Free 15-Minute Call
             </a>
             <a href="mailto:hello@foundersinfra.com" className="btn btn-secondary btn-large">
-              Email Us
+              Email Me
             </a>
           </div>
           <p className="contact-note">
