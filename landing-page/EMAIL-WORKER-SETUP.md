@@ -1,187 +1,132 @@
-# Email Worker Configuration Guide
+# Email Sequence Setup Guide
 
 ## Overview
 
-This guide shows how to configure the email worker to send automated email sequences to people who sign up on the landing page.
+This landing page has its **own email sequence system** using SendGrid. No external services needed!
 
-**Current Setup:**
-- ✅ HubSpot: Saves contacts (CRM)
-- ✅ SendGrid: Sends welcome email immediately
-- ⏳ **Email Sequences: Not yet configured**
+**How it works:**
+1. User signs up → Contact saved to HubSpot
+2. Welcome email → Sent immediately via SendGrid
+3. Email sequence scheduled → Stored in HubSpot custom properties
+4. Cron job runs hourly → Processes and sends due emails via SendGrid
 
-## Architecture
+## What's Already Built
 
-This landing page uses **SendGrid directly** for email sequences:
+✅ **Email Sequence Service** (`pages/api/services/email-sequences.js`)
+- 6 email templates (welcome, day 2, 5, 9, 13, 20)
+- Scheduling logic
+- SendGrid integration
 
-- **Email Sequence Service** - Schedules emails in HubSpot
-- **Cron Job** - Processes scheduled emails hourly
-- **SendGrid API** - Sends all emails (welcome + sequences)
+✅ **Cron Job** (`pages/api/cron/process-email-queue.js`)
+- Runs hourly via Vercel
+- Processes scheduled emails
+- Sends via SendGrid
 
-**No external services needed** - everything runs in this project!
+✅ **Signup API Integration** (`pages/api/signup.js`)
+- Automatically schedules sequences after welcome email
+- Stores in HubSpot for processing
 
-### Option 2: Create New Email Worker for Landing Page
+✅ **Vercel Configuration** (`vercel.json`)
+- Cron job configured
+- Runs automatically
 
-**Best if:** You want a separate system for the landing page
+## Setup Steps
 
-Create a new email worker specifically for `foundersinfra.com` that:
-- Uses SendGrid (already configured)
-- Integrates with signup API
-- Sends sequences on schedule
+### Step 1: Create HubSpot Custom Properties
 
-### Option 3: SendGrid Dynamic Templates
+Go to HubSpot → Settings → Properties → Contacts and create:
 
-**Best if:** You want minimal code, maximum simplicity
+1. **`scheduled_emails`** (Single-line text)
+   - Stores JSON array of scheduled emails
+   - Internal property (not shown to users)
 
-Use SendGrid's built-in automation:
-- Create email templates in SendGrid
-- Set up automation workflows
-- Trigger via API on signup
+2. **`email_sequence`** (Single-line text)
+   - Sequence name (e.g., "foundersinfra-welcome")
+   - Internal property
 
----
+3. **`sequence_start_date`** (Date picker)
+   - When the sequence started
+   - Internal property
 
-## Option 1: Use EasyFlow Email Worker (Recommended)
-
-### Step 1: Expose EasyFlow API Endpoint
-
-In your EasyFlow SaaS, create an API endpoint to enroll contacts in email sequences:
-
-**File:** `rpa-system/backend/routes/emailSequenceRoutes.js` (or similar)
-
-```javascript
-// Add to your EasyFlow backend
-router.post('/api/email-sequences/enroll', async (req, res) => {
-  const { email, firstName, lastName, sequence } = req.body;
-  
-  // Validate
-  if (!email || !sequence) {
-    return res.status(400).json({ error: 'Email and sequence required' });
-  }
-  
-  // Use your existing email worker
-  const emailWorker = require('../workers/email_worker');
-  
-  // Enroll in sequence
-  await emailWorker.enrollInSequence({
-    email,
-    firstName: firstName || '',
-    lastName: lastName || '',
-    sequence: sequence || 'foundersinfra-welcome', // Default sequence
-  });
-  
-  res.json({ success: true, message: 'Enrolled in email sequence' });
-});
-```
-
-### Step 2: Update Landing Page Signup API
-
-Update `landing-page/pages/api/signup.js` to call EasyFlow:
-
-```javascript
-// After welcome email is sent successfully
-if (emailSent) {
-  // Enroll in EasyFlow email sequence
-  const EASYFLOW_API_URL = process.env.EASYFLOW_API_URL || 'https://your-easyflow-domain.com';
-  const EASYFLOW_API_KEY = process.env.EASYFLOW_API_KEY;
-  
-  if (EASYFLOW_API_KEY) {
-    try {
-      const response = await fetch(`${EASYFLOW_API_URL}/api/email-sequences/enroll`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${EASYFLOW_API_KEY}`,
-        },
-        body: JSON.stringify({
-          email,
-          firstName: firstName || '',
-          lastName: lastName || '',
-          sequence: 'foundersinfra-welcome', // Your sequence name in EasyFlow
-        }),
-      });
-      
-      if (response.ok) {
-        console.log('Enrolled in EasyFlow email sequence:', email);
-      } else {
-        console.error('Failed to enroll in EasyFlow sequence:', await response.text());
-      }
-    } catch (error) {
-      console.error('EasyFlow enrollment error:', error);
-      // Don't fail signup if sequence enrollment fails
-    }
-  }
-}
-```
+See `EMAIL-SEQUENCE-SETUP.md` for detailed instructions.
 
 ### Step 2: Set Environment Variables
 
-In Vercel Dashboard → Settings → Environment Variables:
+In Vercel Dashboard → Project Settings → Environment Variables:
 
 ```
-SENDGRID_API_KEY=your_sendgrid_api_key
+HUBSPOT_API_KEY=your_hubspot_api_key
+SENDGRID_API_KEY=your_sendgrid_api_key  # The one you created - "Pragmatic Playbook"
 SENDGRID_FROM_EMAIL=founders@foundersinfra.com
 SENDGRID_FROM_NAME=Founders Infrastructure
-HUBSPOT_API_KEY=your_hubspot_api_key
-EASYFLOW_API_URL=https://your-easyflow-domain.com
-EASYFLOW_API_KEY=your_easyflow_api_key
+CRON_SECRET=your_random_secret_here  # Optional but recommended
 ```
 
----
+### Step 3: Deploy
 
-## Option 2: Create New Email Worker for Landing Page
+The cron job is already configured in `vercel.json`. Just deploy and it will run automatically.
 
-If you want a simpler approach, you can trigger SendGrid sequences directly from the signup API:
+### Step 4: Test
 
-### Update Signup API
+1. Sign up on the landing page
+2. Check HubSpot → Verify `scheduled_emails` property is set
+3. Wait for cron job (or trigger manually)
+4. Verify emails are sent via SendGrid
 
-```javascript
-// After welcome email is sent
-if (emailSent && SENDGRID_API_KEY) {
-  // Option A: Use SendGrid Marketing Campaigns API
-  // Option B: Schedule emails manually via SendGrid API
-  // Option C: Use SendGrid dynamic templates with scheduled sends
-  
-  // For now, we'll just send the welcome email
-  // Add sequence emails manually or via SendGrid automation
-}
+## Email Sequence
+
+**Sequence:** `foundersinfra-welcome`
+
+- **Day 0:** Welcome (sent immediately)
+- **Day 2:** The $50K Technical Debt Problem
+- **Day 5:** How to Recover Lost Velocity
+- **Day 9:** Real Results from Infrastructure Consulting
+- **Day 13:** Ready to Recover $50K+ in Lost Velocity?
+- **Day 20:** Following up on infrastructure consulting
+
+## Manual Testing
+
+### Test Cron Job
+
+```bash
+curl -X POST https://your-vercel-url.vercel.app/api/cron/process-email-queue \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
-### Use SendGrid Automation
+### Check Scheduled Emails
 
-1. Go to SendGrid → Marketing → Automation
-2. Create a new automation
-3. Trigger: When contact is added to list
-4. Add email sequence (Day 2, Day 5, Day 9, etc.)
-5. Connect to your SendGrid contact list
+1. Go to HubSpot → Contacts
+2. Find a contact
+3. Check `scheduled_emails` property
+4. Should see JSON array with scheduled emails
 
----
+## Troubleshooting
 
-## Option 3: SendGrid Dynamic Templates (Alternative)
+**Emails not sending?**
+- Check SendGrid API key in Vercel
+- Check HubSpot custom properties exist
+- Check cron job logs in Vercel
+- Check SendGrid activity dashboard
 
----
+**Cron job not running?**
+- Verify `vercel.json` has cron configuration
+- Check Vercel deployment is latest
+- Check Vercel cron logs
 
-## Recommended Approach
-
-**Use Option 1 (EasyFlow Email Worker)** because:
-- ✅ You already have the infrastructure (EasyFlow SaaS)
-- ✅ SendGrid already configured
-- ✅ Email worker already working
-- ✅ Centralized email management
-- ✅ Reuse existing sequences
-- ✅ One system for all emails
-
----
+**Scheduled emails not stored?**
+- Check HubSpot API key
+- Verify custom properties exist
+- Check signup API logs
 
 ## Next Steps
 
-1. ✅ Choose your approach (Option 1 recommended)
-2. ⏳ Create SendGrid email service
-3. ⏳ Create email queue service
-4. ⏳ Create cron job processor
-5. ⏳ Update signup API to schedule sequences
-6. ⏳ Configure Vercel cron job
-7. ⏳ Test end-to-end flow
+1. ✅ Email sequence service created
+2. ✅ Cron job created
+3. ✅ Signup API integrated
+4. ⏳ Create HubSpot custom properties
+5. ⏳ Set environment variables
+6. ⏳ Deploy and test
 
 ---
 
-**Questions?** Your EasyFlow email worker is already set up and working. Just expose an API endpoint to enroll contacts in sequences, then call it from the landing page signup API.
-
+**Everything is ready!** Just create the HubSpot properties and deploy. The email sequences will work automatically using your SendGrid API key.
