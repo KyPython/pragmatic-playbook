@@ -206,8 +206,8 @@ export default function Home() {
         </section>
 
         <section id="signup" className="signup">
-          <h2>Get Infrastructure Insights</h2>
-          <p>Join 200+ founders learning to build production-grade infrastructure.</p>
+          <h2>Get Free Infrastructure Resources</h2>
+          <p>Join founders learning to build production-grade infrastructure. Get weekly insights, case studies, and practical guides.</p>
           
           <form onSubmit={handleSubmit} className="signup-form">
             <div className="form-row">
@@ -237,6 +237,9 @@ export default function Home() {
             <button type="submit" disabled={submitting} className="btn btn-primary btn-large">
               {submitting ? 'Signing up...' : 'Get Free Resources'}
             </button>
+            <p className="form-note">
+              No spam. Unsubscribe anytime. We respect your inbox.
+            </p>
             {message.text && (
               <div className={`message ${message.type}`}>
                 {message.text}
@@ -613,6 +616,14 @@ export default function Home() {
           outline: none;
           border-color: white;
           background: rgba(255,255,255,0.2);
+        }
+
+        .form-note {
+          margin-top: 15px;
+          font-size: 14px;
+          opacity: 0.9;
+          font-style: italic;
+          color: rgba(255,255,255,0.9);
         }
 
         .message {
