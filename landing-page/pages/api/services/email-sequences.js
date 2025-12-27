@@ -295,7 +295,22 @@ async function scheduleSequence(email, firstName, sequenceName = 'foundersinfra-
       return { success: true, scheduledCount: scheduledEmails.length };
     } else {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to schedule email sequence');
+      const errorMessage = errorData.message || 'Failed to schedule email sequence';
+      
+      // If custom properties don't exist, log warning but don't fail
+      if (errorMessage.includes('Property values were not valid') || 
+          errorMessage.includes('property') && errorMessage.includes('not found') ||
+          errorMessage.toLowerCase().includes('invalid property')) {
+        console.warn(`HubSpot custom properties not found. Please create: scheduled_emails, email_sequence, sequence_start_date. Error: ${errorMessage}`);
+        console.warn('See landing-page/AUTOMATED-EMAIL-SETUP.md for instructions on creating these properties.');
+        return { 
+          success: false, 
+          error: 'Custom properties not found. Please create them in HubSpot (see AUTOMATED-EMAIL-SETUP.md)',
+          warning: true 
+        };
+      }
+      
+      throw new Error(errorMessage);
     }
   } catch (error) {
     console.error('Failed to schedule email sequence:', error);

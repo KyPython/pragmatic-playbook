@@ -333,7 +333,7 @@ export default async function handler(req, res) {
         safeLog.log(`Welcome email sent via SendGrid to ${isDevelopment ? email : maskSensitiveData(email)}`);
         emailSent = true;
         
-        // Schedule remaining email sequence
+        // Schedule remaining email sequence (only if contactId exists and custom properties are set up)
         if (contactId) {
           const sequenceResult = await emailSequences.scheduleSequence(
             email,
@@ -345,7 +345,12 @@ export default async function handler(req, res) {
             safeLog.log(`Email sequence scheduled: ${sequenceResult.scheduledCount} emails`);
             sequenceScheduled = true;
           } else {
-            safeLog.error('Failed to schedule email sequence:', sequenceResult.error);
+            // Log warning but don't fail - custom properties might not exist yet
+            if (sequenceResult.warning) {
+              safeLog.warn('Email sequence scheduling skipped:', sequenceResult.error);
+            } else {
+              safeLog.error('Failed to schedule email sequence:', sequenceResult.error);
+            }
           }
         }
       } catch (sendGridError) {
