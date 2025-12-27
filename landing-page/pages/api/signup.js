@@ -8,6 +8,16 @@ export default async function handler(req, res) {
   if (process.env.SENDGRID_API_KEY) {
     sgMail = (await import('@sendgrid/mail')).default;
   }
+  
+  // Dynamic import for email sequences (only if needed)
+  let emailSequences = null;
+  if (process.env.HUBSPOT_API_KEY) {
+    try {
+      emailSequences = require('./services/email-sequences');
+    } catch (e) {
+      console.warn('Email sequences service not available:', e.message);
+    }
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -201,37 +211,25 @@ export default async function handler(req, res) {
       }
     }
 
-    // Enroll in EasyFlow email sequence (if configured)
-    const EASYFLOW_API_URL = process.env.EASYFLOW_API_URL;
-    const EASYFLOW_API_KEY = process.env.EASYFLOW_API_KEY;
-    let easyflowEnrolled = false;
-
-    if (EASYFLOW_API_URL && EASYFLOW_API_KEY && emailSent) {
+    // Schedule email sequence using SendGrid (if configured)
+    let sequenceScheduled = false;
+    if (emailSent && emailSequences && HUBSPOT_API_KEY) {
       try {
-        const easyflowResponse = await fetch(`${EASYFLOW_API_URL}/api/email-sequences/enroll`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${EASYFLOW_API_KEY}`,
-          },
-          body: JSON.stringify({
-            email,
-            firstName: firstName || '',
-            lastName: lastName || '',
-            sequence: 'foundersinfra-welcome', // Default sequence name
-          }),
-        });
-
-        if (easyflowResponse.ok) {
-          console.log(`Enrolled in EasyFlow email sequence: ${email}`);
-          easyflowEnrolled = true;
+        const result = await emailSequences.scheduleSequence(
+          email,
+          firstName || '',
+          'foundersinfra-welcome'
+        );
+        
+        if (result.success) {
+          console.log(`Email sequence scheduled for ${email}: ${result.scheduledCount} emails`);
+          sequenceScheduled = true;
         } else {
-          const errorText = await easyflowResponse.text();
-          console.error('EasyFlow enrollment failed:', errorText);
+          console.error('Failed to schedule email sequence:', result.error);
         }
-      } catch (easyflowError) {
-        console.error('EasyFlow enrollment error:', easyflowError);
-        // Don't fail signup if EasyFlow enrollment fails
+      } catch (sequenceError) {
+        console.error('Email sequence scheduling error:', sequenceError);
+        // Don't fail signup if sequence scheduling fails
       }
     }
 
@@ -242,7 +240,7 @@ export default async function handler(req, res) {
       source: leadSource,
       emailSent: emailSent,
       hubspotSaved: !!HUBSPOT_API_KEY,
-      easyflowEnrolled: easyflowEnrolled,
+      sequenceScheduled: sequenceScheduled,
     });
   } catch (error) {
     console.error('HubSpot API Error:', error);
