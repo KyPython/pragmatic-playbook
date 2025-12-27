@@ -2,6 +2,82 @@
 // HubSpot: Contact management (CRM) only
 // SendGrid: All email sending (transactional + sequences)
 
+// Helper to check if we're in development
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Helper function to mask sensitive data in production
+function maskSensitiveData(data) {
+  if (isDevelopment) {
+    return data; // Return full data in development
+  }
+  
+  // In production, mask sensitive information
+  if (typeof data === 'string') {
+    // Mask email addresses
+    return data.replace(/\b[\w.-]+@[\w.-]+\.\w+\b/g, (email) => {
+      const [local, domain] = email.split('@');
+      return `${local.substring(0, 2)}***@${domain}`;
+    });
+  }
+  
+  if (typeof data === 'object' && data !== null) {
+    const masked = { ...data };
+    
+    // Mask sensitive fields
+    const sensitiveFields = ['email', 'apiKey', 'api_key', 'token', 'password', 'contactId', 'contact_id', 'vid'];
+    for (const field of sensitiveFields) {
+      if (masked[field]) {
+        if (typeof masked[field] === 'string' && masked[field].length > 4) {
+          masked[field] = `${masked[field].substring(0, 2)}***${masked[field].substring(masked[field].length - 2)}`;
+        } else {
+          masked[field] = '***';
+        }
+      }
+    }
+    
+    // Mask nested objects
+    for (const key in masked) {
+      if (typeof masked[key] === 'object' && masked[key] !== null) {
+        masked[key] = maskSensitiveData(masked[key]);
+      }
+    }
+    
+    return masked;
+  }
+  
+  return data;
+}
+
+// Environment-aware logging helper
+const safeLog = {
+  log: (...args) => {
+    if (isDevelopment) {
+      console.log(...args);
+    } else {
+      // In production, log minimal info
+      const masked = args.map(arg => maskSensitiveData(arg));
+      console.log(...masked);
+    }
+  },
+  error: (...args) => {
+    if (isDevelopment) {
+      console.error(...args);
+    } else {
+      // In production, log errors but mask sensitive data
+      const masked = args.map(arg => maskSensitiveData(arg));
+      console.error(...masked);
+    }
+  },
+  warn: (...args) => {
+    if (isDevelopment) {
+      console.warn(...args);
+    } else {
+      const masked = args.map(arg => maskSensitiveData(arg));
+      console.warn(...masked);
+    }
+  }
+};
+
 // Helper function to format error messages based on environment
 function formatErrorMessage(error, isDevelopment = false) {
   const isDev = isDevelopment || process.env.NODE_ENV === 'development';
@@ -49,11 +125,9 @@ export default async function handler(req, res) {
     try {
       emailSequences = require('./services/email-sequences');
     } catch (e) {
-      console.warn('Email sequences service not available:', e.message);
+      safeLog.warn('Email sequences service not available:', e.message);
     }
   }
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
   if (req.method !== 'POST') {
     return res.status(405).json({ 
       success: false, 
@@ -106,7 +180,7 @@ export default async function handler(req, res) {
 
   if (!HUBSPOT_API_KEY) {
     // If HubSpot not configured, log warning but still try to send email
-    console.warn('HubSpot API key not configured - contacts will not be saved to HubSpot');
+    safeLog.warn('HubSpot API key not configured - contacts will not be saved to HubSpot');
     
     // Still try to send welcome email if SendGrid is configured
     const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
@@ -123,7 +197,7 @@ export default async function handler(req, res) {
           html: `Hi ${firstName || 'there'},<br><br>Welcome! You've been added to our mailing list.<br><br>Best,<br>${SENDGRID_FROM_NAME}`,
         });
       } catch (emailError) {
-        console.error('SendGrid error (HubSpot not configured):', emailError);
+        safeLog.error('SendGrid error (HubSpot not configured):', emailError);
       }
     }
     
@@ -188,9 +262,9 @@ export default async function handler(req, res) {
           const updateData = await updateResponse.json();
           contactId = updateData.vid || updateData.id;
           hubspotSaved = true;
-          console.log(`Updated existing contact in HubSpot: ${contactId}`);
+          safeLog.log(`Updated existing contact in HubSpot: ${isDevelopment ? contactId : '***'}`);
         } catch (parseError) {
-          console.error('Failed to parse HubSpot update response:', parseError);
+          safeLog.error('Failed to parse HubSpot update response:', parseError);
           hubspotSaved = false;
         }
         // Continue to send welcome email (don't return early)
@@ -202,9 +276,9 @@ export default async function handler(req, res) {
         } catch (e) {
           updateErrorData = { message: `HTTP ${updateResponse.status}` };
         }
-        console.error('HubSpot update error (contact exists but update failed):', {
+        safeLog.error('HubSpot update error (contact exists but update failed):', {
           status: updateResponse.status,
-          error: updateErrorData
+          error: isDevelopment ? updateErrorData : maskSensitiveData(updateErrorData)
         });
         hubspotSaved = false;
         // Continue anyway - we'll try to send email
@@ -227,15 +301,15 @@ export default async function handler(req, res) {
                           errorData.errors?.[0]?.error || 
                           `HTTP ${response.status}: ${response.statusText}`;
       
-      // Log full error details for debugging (always log technical details)
-      console.error('HubSpot API Error (continuing anyway):', {
+      // Log error details (masked in production)
+      safeLog.error('HubSpot API Error (continuing anyway):', {
         status: response.status,
         statusText: response.statusText,
-        error: errorData,
+        error: isDevelopment ? errorData : maskSensitiveData(errorData),
         message: errorMessage,
-        properties: properties, // Log what we tried to send
+        properties: isDevelopment ? properties : maskSensitiveData(properties),
         apiKeyPresent: !!HUBSPOT_API_KEY,
-        apiKeyLength: HUBSPOT_API_KEY ? HUBSPOT_API_KEY.length : 0
+        apiKeyLength: isDevelopment && HUBSPOT_API_KEY ? HUBSPOT_API_KEY.length : undefined
       });
       
       // Don't throw - continue to send welcome email even if HubSpot fails
@@ -246,23 +320,15 @@ export default async function handler(req, res) {
         const data = await response.json();
         contactId = data.vid || data.id;
         hubspotSaved = true;
-        console.log(`Created new contact in HubSpot: ${contactId}`);
+        safeLog.log(`Created new contact in HubSpot: ${isDevelopment ? contactId : '***'}`);
       } catch (parseError) {
-        console.error('Failed to parse HubSpot response:', parseError);
+        safeLog.error('Failed to parse HubSpot response:', parseError);
         // Continue anyway - contact might have been created
         hubspotSaved = false;
       }
     }
 
-    let contactId = null;
-    try {
-      const data = await response.json();
-      contactId = data.vid || data.id;
-      console.log(`Created new contact in HubSpot: ${contactId}`);
-    } catch (parseError) {
-      console.error('Failed to parse HubSpot response:', parseError);
-      // Continue anyway - contact might have been created
-    }
+    // contactId and hubspotSaved are already set above
     
     // Note: HubSpot is used for contact management only
     // Email sequences are handled by SendGrid (see below)
@@ -317,10 +383,10 @@ export default async function handler(req, res) {
           `,
           text: `Hi ${firstName || 'there'},\n\nWelcome! You've taken the first step toward building production-grade infrastructure.\n\nOver the next 8 weeks, you'll learn:\n- How to detect technical debt before it costs $50k\n- How to build MVPs in 2 weeks instead of 3 months\n- How to deploy on Friday 5 PM with confidence\n\nQuestions? Just reply to this email.\n\nLet's build something great,\n${SENDGRID_FROM_NAME}\n\n---\nThe Founder's Infrastructure Playbook\nfoundersinfra.com`,
         });
-        console.log(`Welcome email sent via SendGrid to ${email}`);
+        safeLog.log(`Welcome email sent via SendGrid to ${isDevelopment ? email : maskSensitiveData(email)}`);
         emailSent = true;
       } catch (sendGridError) {
-        console.error('SendGrid error:', sendGridError);
+        safeLog.error('SendGrid error:', sendGridError);
         // Don't fail signup if email fails
       }
     }
@@ -336,13 +402,13 @@ export default async function handler(req, res) {
         );
         
         if (result.success) {
-          console.log(`Email sequence scheduled for ${email}: ${result.scheduledCount} emails`);
+          safeLog.log(`Email sequence scheduled for ${isDevelopment ? email : maskSensitiveData(email)}: ${result.scheduledCount} emails`);
           sequenceScheduled = true;
         } else {
-          console.error('Failed to schedule email sequence:', result.error);
+          safeLog.error('Failed to schedule email sequence:', result.error);
         }
       } catch (sequenceError) {
-        console.error('Email sequence scheduling error:', sequenceError);
+        safeLog.error('Email sequence scheduling error:', sequenceError);
         // Don't fail signup if sequence scheduling fails
       }
     }
@@ -357,11 +423,11 @@ export default async function handler(req, res) {
       sequenceScheduled: sequenceScheduled,
     });
   } catch (error) {
-    // Always log full error details for debugging
-    console.error('Signup API Error:', {
+    // Log error details (masked in production)
+    safeLog.error('Signup API Error:', {
       message: error.message,
       stack: isDevelopment ? error.stack : undefined,
-      error: error
+      error: isDevelopment ? error : maskSensitiveData(error)
     });
     
     // Return user-friendly message in production, technical in development
