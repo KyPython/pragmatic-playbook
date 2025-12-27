@@ -205,7 +205,11 @@ export default async function handler(req, res) {
       }
     }
 
+    let contactId = null;
+    let hubspotSaved = false;
+    
     if (!response.ok) {
+      // HubSpot API failed - log error but don't fail signup
       let errorData;
       try {
         errorData = await response.json();
@@ -221,7 +225,7 @@ export default async function handler(req, res) {
                           `HTTP ${response.status}: ${response.statusText}`;
       
       // Log full error details for debugging (always log technical details)
-      console.error('HubSpot API Error:', {
+      console.error('HubSpot API Error (continuing anyway):', {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
@@ -231,7 +235,20 @@ export default async function handler(req, res) {
         apiKeyLength: HUBSPOT_API_KEY ? HUBSPOT_API_KEY.length : 0
       });
       
-      throw new Error(errorMessage);
+      // Don't throw - continue to send welcome email even if HubSpot fails
+      hubspotSaved = false;
+    } else {
+      // HubSpot succeeded
+      try {
+        const data = await response.json();
+        contactId = data.vid || data.id;
+        hubspotSaved = true;
+        console.log(`Created new contact in HubSpot: ${contactId}`);
+      } catch (parseError) {
+        console.error('Failed to parse HubSpot response:', parseError);
+        // Continue anyway - contact might have been created
+        hubspotSaved = false;
+      }
     }
 
     let contactId = null;
