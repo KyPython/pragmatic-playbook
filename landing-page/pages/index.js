@@ -68,7 +68,7 @@ export default function Home() {
             <a href="#consulting" className="btn btn-primary">
               View Services
             </a>
-            <a href="#contact" className="btn btn-secondary">
+            <a href="https://calendly.com/kyjahn-smith/consultation" className="btn btn-secondary">
               Book a Call
             </a>
           </div>
