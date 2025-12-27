@@ -139,14 +139,14 @@ export default function Home() {
               <div className="price">$3,000</div>
               <p className="duration">12 hours</p>
               <ul>
-                <li>GitHub Actions setup</li>
-                <li>Automated testing</li>
-                <li>Monitoring (Sentry)</li>
-                <li>Rollback procedures</li>
-                <li>Team training</li>
+                <li>Leverage proven GitHub Actions workflows</li>
+                <li>Automated testing and deployment</li>
+                <li>Monitoring and alerting setup</li>
+                <li>Rollback procedures and runbooks</li>
+                <li>Team training on existing infrastructure</li>
               </ul>
               <p className="deliverable">
-                <strong>I deliver:</strong> Automated deployment pipeline with rollback capability
+                <strong>I deliver:</strong> Production-ready CI/CD using proven infrastructure (no reinventing the wheel)
               </p>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function Home() {
               <ul>
                 <li>Testing strategy</li>
                 <li>Live implementation</li>
-                <li>CI/CD setup</li>
+                <li>CI/CD integration with existing workflows</li>
                 <li>30-day action plan</li>
               </ul>
               <p className="deliverable">
@@ -200,7 +200,7 @@ export default function Home() {
             </div>
             <div className="approach-card">
               <h3>Build Confidence</h3>
-              <p>I set up CI/CD, testing, and monitoring so you can deploy with confidence. No more "only Monday mornings" or "hope it works" deployments.</p>
+              <p>I set up CI/CD using proven infrastructure, testing, and monitoring so you can deploy with confidence. No more "only Monday mornings" or "hope it works" deployments. I use what already works, not reinvent the wheel.</p>
             </div>
           </div>
         </section>
