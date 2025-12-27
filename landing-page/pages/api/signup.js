@@ -208,6 +208,10 @@ export default async function handler(req, res) {
     });
   }
 
+  // Initialize variables for HubSpot contact tracking
+  let contactId = null;
+  let hubspotSaved = false;
+
   try {
     // Build properties array for v1 API (format: [{property: 'name', value: 'value'}])
     // Use ONLY core properties that always exist in every HubSpot account
