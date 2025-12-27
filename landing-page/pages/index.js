@@ -60,7 +60,7 @@ export default function Home() {
         <meta name="theme-color" content="#3b82f6" />
       </Head>
 
-      {/* HubSpot Embed Code */}
+      {/* HubSpot Embed Code - Analytics only (form tracking disabled via data attribute) */}
       <Script
         id="hs-script-loader"
         strategy="afterInteractive"

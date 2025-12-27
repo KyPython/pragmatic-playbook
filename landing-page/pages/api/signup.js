@@ -424,6 +424,14 @@ export default async function handler(req, res) {
       emailSent: emailSent,
       hubspotSaved: hubspotSaved,
       sequenceScheduled: sequenceScheduled,
+      // Include debug info in development
+      ...(isDevelopment && {
+        debug: {
+          hubspotContactId: contactId,
+          hubspotSaved: hubspotSaved,
+          email: email,
+        }
+      })
     });
   } catch (error) {
     // Log error details (masked in production)
