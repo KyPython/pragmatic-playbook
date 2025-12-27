@@ -160,13 +160,10 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             properties: [
               { property: 'lifecyclestage', value: 'subscriber' },
-              // Update source tracking even for existing contacts
+              // Update source tracking even for existing contacts (standard properties only)
               { property: 'hs_analytics_source', value: 'LANDING_PAGE' },
               { property: 'hs_analytics_source_data_1', value: 'foundersinfra.com' },
-              { property: 'signup_source', value: 'Landing Page - Email Signup Form' },
-              { property: 'last_signup_date', value: new Date().toISOString() },
-              { property: 'marketing_source', value: marketingSource },
-              { property: 'lead_source', value: leadSource },
+              { property: 'hs_analytics_source_data_2', value: 'Email Signup Form' },
             ],
           }),
         }
