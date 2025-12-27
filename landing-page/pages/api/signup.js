@@ -331,8 +331,6 @@ export default async function handler(req, res) {
         hubspotSaved = false;
       }
     }
-
-    // contactId and hubspotSaved are already set above
     
     // Note: HubSpot is used for contact management only
     // Email sequences are handled by SendGrid (see below)
